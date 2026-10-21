@@ -14,10 +14,16 @@ The working scenario uses 120-second attack/defense rounds, a smaller field whos
 
 ## Start in Colab
 
-1. Create a GitHub repository and upload this scaffold, including the files beginning with a dot.
-2. Open `notebooks/00_setup.ipynb` in Google Colab. Choose a standard CPU runtime.
-3. Set `REPO_URL` in the notebook to your repository URL and run the setup cells.
-4. Review the baseline configuration and unresolved measurements. Setup does not run a simulation.
+Repository: https://github.com/Echoudexigaigu/archery-tag-simulate
+
+[Open setup in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/00_setup.ipynb)
+
+The setup notebook uses the public repository URL below and requires no GitHub token for cloning.
+
+1. Click **Open setup in Colab** above.
+2. Connect to a standard CPU runtime (hardware accelerator: None).
+3. Run the code cells in order; `REPO_URL` is already configured.
+4. Review the baseline configuration, unresolved measurements, and Git commit. Setup does not run a simulation.
 
 The clone cell supports public repositories without credentials. For a private repository, follow `docs/colab_workflow.md`; never put credentials in tracked files or notebook outputs.
 

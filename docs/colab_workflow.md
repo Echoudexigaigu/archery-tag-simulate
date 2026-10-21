@@ -1,14 +1,18 @@
 # Colab + Git 工作流
 
-## 首次建立 GitHub 仓库
+## 已配置仓库与入口
 
-仓库名建议 `archery-tag-balance`。可先设为 Private；公开与否由所有者决定。若上传本骨架，不要额外生成一个不同的 README。新建仓库后可用 GitHub 的 Upload files 上传，确保 `.gitignore` 和 `.gitattributes` 也被提交；GitHub 不会自动解压上传的 ZIP。
+仓库：https://github.com/Echoudexigaigu/archery-tag-simulate
+
+Colab：https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/00_setup.ipynb
+
+当前仓库为公开仓库，克隆读取无需 Token。Notebook 已预填仓库地址。选择 CPU 运行时，依次运行代码单元，检查配置与代码版本；这一步不会开始仿真。
 
 ## 运行位置
 
-Notebook 可由 GitHub 打开，也可上传至 Colab。代码在 `/content/archery-tag-balance` 工作，批量输出先写临时磁盘，再定期复制到 Drive。不要把大量逐帧文件直接写入挂载 Drive。
+Notebook 可由 GitHub 打开，也可上传至 Colab。代码在 `/content/archery-tag-simulate` 工作，批量输出先写临时磁盘，再定期复制到 Drive。不要把大量逐帧文件直接写入挂载 Drive。
 
-`00_setup.ipynb` 的克隆单元只处理无需凭据的仓库。私有仓库可先将已认证下载的项目 ZIP 上传并解压到 `/content/archery-tag-balance`，再运行配置检查；ZIP 没有 Git 历史，实验版本需另存下载时的 commit。需要私有仓库 Git 同步时再配置受限凭据，不能写入 notebook、仓库文件、remote URL 或日志。
+`00_setup.ipynb` 的克隆单元只处理无需凭据的仓库。私有仓库可先将已认证下载的项目 ZIP 上传并解压到 `/content/archery-tag-simulate`，再运行配置检查；ZIP 没有 Git 历史，实验版本需另存下载时的 commit。需要私有仓库 Git 同步时再配置受限凭据，不能写入 notebook、仓库文件、remote URL 或日志。
 
 ## 版本保存
 
