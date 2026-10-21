@@ -1,0 +1,27 @@
+# Python and notebooks
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Credentials and local settings
+.env
+.env.*
+!.env.example
+.secrets/
+.DS_Store
+
+# Regenerable / large experimental artifacts
+/data/
+/runs/
+/checkpoints/
+/videos/
+/artifacts/
+*.pt
+*.pth
+*.ckpt
+*.mp4
+*.gif
