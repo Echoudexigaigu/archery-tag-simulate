@@ -2,7 +2,7 @@
 
 Evaluate asymmetric Archery Tag rules and five-spot target-rack placement through reproducible multi-agent simulation.
 
-**Status: mathematical design and repository scaffold. No simulator, trained policy, or measured balance results yet.**
+**Status: first runnable, uncalibrated attack/defense simulator with scripted players. No trained RL policy or real-world balance estimate.**
 
 ## Research questions
 
@@ -10,7 +10,19 @@ Evaluate asymmetric Archery Tag rules and five-spot target-rack placement throug
 - How do veteran count and individual archery proficiency change those probabilities?
 - Which simple resource, life, or respawn adjustments compensate for unequal rosters?
 
-The working scenario uses 120-second attack/defense rounds, a smaller field whose dimensions still need measurement, and **one rack holding five fixed target spots**. Rack position is a design variable; individual spots do not move independently.
+The working scenario uses 120-second attack/defense rounds, a user-supplied 23 x 12 m field, and **one rack holding five fixed target spots**. Rack position is a design variable; individual spots do not move independently.
+
+## Run the first simulation
+
+[Open attack/defense simulation in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/01_attack_defense.ipynb)
+
+Choose a CPU runtime and run the cells in order. The notebook shows the assumed map, runs one episode, displays target states and resource curves, and compares veteran counts. Review the provisional 1 x 0.6 x 1 m bunker interpretation and all other unmeasured parameters before using results.
+
+- Configuration: `configs/attack_defense_23x12.json`
+- Initial report: `reports/first_simulation/README.md`
+- Core: Python standard library; Matplotlib is only needed for plots.
+- Tests: `PYTHONPATH=src python -m unittest discover -s tests -v`
+- Full batch: `PYTHONPATH=src python scripts/run_initial_experiments.py`
 
 ## Start in Colab
 
@@ -31,13 +43,14 @@ The clone cell supports public repositories without credentials. For a private r
 
 | Path | Purpose |
 | --- | --- |
-| `configs/baseline.json` | Proposed game rules and explicitly missing measurements |
+| `configs/baseline.json` | Original unresolved design template |
+| `configs/attack_defense_23x12.json` | Runnable provisional field, rules, skills and policies |
 | `docs/model.md` | Mathematical model and balance objective |
 | `docs/decisions.md` | Confirmed decisions, provisional assumptions, and open questions |
 | `docs/colab_workflow.md` | Colab/Git/Drive workflow |
 | `notebooks/00_setup.ipynb` | Clone, inspect configuration, and record repository version |
-| `src/archery_tag_balance/` | Reserved for future simulator modules |
-| `tests/` | Reserved for physics and rules checks |
+| `src/archery_tag_balance/` | Entities, geometry, environment, policies and evaluation |
+| `tests/` | Physics, conservation, observation and rule checks |
 | `reports/` | Selected small, reviewed results |
 
 ## Reproducibility
@@ -48,4 +61,4 @@ Code, configuration, and selected reports belong in Git. Large trajectories, mod
 
 ## Next milestone
 
-Measure field/rack geometry and resolve the rule questions before implementing a single 4v4 episode. Validate the rules before training or claiming balance.
+Confirm bunker dimensions, five-hole geometry and assumed boundaries; calibrate arrow dispersion and timings. Compare policy families and refine the model before training or claiming real-world balance.
