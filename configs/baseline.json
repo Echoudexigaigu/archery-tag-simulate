@@ -1,0 +1,107 @@
+{
+  "schema_version": "0.1",
+  "status": "design_only_not_runnable",
+  "mode": "attack_defense_clear_five_spots",
+  "time": {
+    "round_seconds": 120,
+    "decision_dt_seconds": null,
+    "deadline_event_policy": null
+  },
+  "field": {
+    "length_m": null,
+    "width_m": null,
+    "attack_direction": "+x",
+    "movement_regions": null,
+    "shooting_regions": null,
+    "pickup_regions": null,
+    "spawn_regions": null,
+    "resupply_locations": null
+  },
+  "rack": {
+    "count": 1,
+    "spot_count": 5,
+    "position_xy_m": null,
+    "height_m": null,
+    "yaw_rad": null,
+    "frame_dimensions_m": null,
+    "spot_local_horizontal_vertical_m": null,
+    "spot_radii_m": null,
+    "knocked_out_spots_are_pass_through": null,
+    "optimize": [
+      "position_xy_m"
+    ]
+  },
+  "teams": {
+    "attack": {
+      "players": 4,
+      "eta": null,
+      "lives_mode": "unlimited",
+      "initial_arrows_per_player": 0,
+      "carry_limit": 3,
+      "respawn_delay_seconds": null,
+      "respawn_grants_arrows": false,
+      "proposed_obstacle_count": 3
+    },
+    "defense": {
+      "players": 4,
+      "eta": null,
+      "lives_mode": "finite",
+      "lives_per_player": 2,
+      "allocated_initial_arrows_per_player": 5,
+      "carry_limit": 3,
+      "allocation_over_carry_limit": "team_resupply",
+      "respawn_delay_seconds": null,
+      "respawn_grants_arrows": false,
+      "proposed_obstacle_count": 1
+    }
+  },
+  "opening": {
+    "both_teams_start_with_bow": true,
+    "center_arrow_count": 4,
+    "attack_initial_center_pickup_limit_per_player": 1,
+    "center_arrow_positions_m": null
+  },
+  "obstacles": null,
+  "rules": {
+    "attack_wins_by": "all_five_spots_knocked_out",
+    "timeout_winner": "defense",
+    "elimination_win_enabled": false,
+    "catch_revives_teammate": false,
+    "target_hit_revives_teammate": false,
+    "catch_enabled": null,
+    "respawn_protection": null
+  },
+  "physics": {
+    "player_radius_m": null,
+    "player_height_m": null,
+    "movement_speed_m_s": null,
+    "arrow_launch_speed_m_s": null,
+    "arrow_radius_m": null,
+    "release_height_m": null,
+    "aim_error_model": "small_angle_variance_sigma0_squared_plus_distance_squared_sigma_theta_squared",
+    "eta_mapping_parameters": null,
+    "aim_time_seconds": null,
+    "reload_time_seconds": null,
+    "pickup_time_seconds": null,
+    "catch_parameters": null
+  },
+  "evaluation": {
+    "paired_role_swaps": true,
+    "paired_field_orientation_swaps": true,
+    "seeds": null,
+    "opponent_policy_versions": null,
+    "balance_target": 0.5,
+    "proposed_balance_interval": [
+      0.45,
+      0.55
+    ],
+    "novice_threshold_eta": null,
+    "extra_rules_trigger": null,
+    "train_validation_split": null
+  },
+  "notes": [
+    "Null means unmeasured or unresolved, never silently substitute zero.",
+    "Proposed baseline assumptions are listed in docs/decisions.md.",
+    "No simulation, training, or balance estimate is implemented."
+  ]
+}

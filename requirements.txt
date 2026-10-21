@@ -1,0 +1,2 @@
+# The setup notebook uses only the Python standard library.
+# Add and pin simulation dependencies after selecting and verifying them in Colab.
