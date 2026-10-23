@@ -22,7 +22,7 @@ def wilson(wins, n, z=1.959963984540054):
 def source_digest():
     root = Path(__file__).parent
     digest = hashlib.sha256()
-    for path in sorted(root.glob("*.py")):
+    for path in sorted([*root.glob("*.py"), *root.glob("*.html")]):
         digest.update(path.name.encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()
@@ -32,10 +32,10 @@ class SimulationEngine:
     def __init__(self, config):
         self.config = deepcopy(config)
 
-    def episode(self, seed=0, record=False, check_invariants=False):
+    def episode(self, seed=0, record=False, check_invariants=False, record_interval_s=0.1):
         env = Environment(self.config)
         mirror = bool(seed % 2)
-        env.reset(seed=seed, record=record, mirror_y=mirror)
+        env.reset(seed=seed, record=record, mirror_y=mirror, record_interval_s=record_interval_s)
         navigator = Navigator(self.config, env.obstacles)
         policies = {aid: ScriptedPolicy(self.config, navigator, aid, seed * 101 + i + 17, mirror) for i, aid in enumerate(env.agents)}
         next_decision, actions = -1.0, {}

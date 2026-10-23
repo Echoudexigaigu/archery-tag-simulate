@@ -64,12 +64,15 @@ class Environment:
             if abs(x - bx) <= sx / 2 + 0.05 and abs(y - by) <= sy / 2 + width / 2 and z - height / 2 <= sz:
                 raise ValueError("Rack overlaps an obstacle")
 
-    def reset(self, seed=0, record=False, mirror_y=False):
+    def reset(self, seed=0, record=False, mirror_y=False, record_interval_s=0.1):
+        if not isfinite(record_interval_s) or record_interval_s <= 0:
+            raise ValueError("record_interval_s must be positive and finite")
         self.seed, self.rng = seed, random.Random(seed)
         self.t, self.tick, self.done, self.winner = 0.0, 0, False, None
         self.record, self.trace, self.events = record, [], []
         self.counts, self.cover_seconds, self.exposed_seconds = Counter(), 0.0, 0.0
         self.resource_curve, self._metric_clock = [], 0.0
+        self._record_clock, self.record_interval_s = 0.0, record_interval_s
         c, W = self.config, self.config["field"]["width_m"]
         flip = lambda y: W - y if mirror_y else y
         self.mirror_y = mirror_y
@@ -96,6 +99,8 @@ class Environment:
             self._new_arrow((x, flip(y), 0.0)).opening_arrow = True
         self.total_arrows = len(self.arrows)
         self._sample_metrics()
+        if self.record:
+            self._record_frame()
         return self.get_observation(), {i: {"seed": seed} for i in self.agents}
 
     def _new_arrow(self, position):
@@ -440,6 +445,11 @@ class Environment:
         if self._metric_clock + 1e-9 >= self.config["metrics"]["sample_every_s"] or self.done:
             self._sample_metrics(self._metric_clock)
             self._metric_clock = 0.0
+        if self.record:
+            self._record_clock += dt
+            if self._record_clock + 1e-9 >= self.record_interval_s or self.done:
+                self._record_frame()
+                self._record_clock = 0.0
         obs = self.get_observation() if observe else {}
         terms = {aid: self.done for aid in self.agents}
         truncs = {aid: False for aid in self.agents}
@@ -488,8 +498,10 @@ class Environment:
                     self.cover_seconds += elapsed
         states = Counter(b.state for b in self.arrows.values())
         self.resource_curve.append({"t": self.t, "ground": states["ground"], "carried": states["carried"], "flying": states["flying"], "attack_ammo": sum(len(a.inventory) for a in active if a.team == "attack"), "defense_ammo": sum(len(a.inventory) for a in active if a.team == "defense"), "shots": self.counts["shot"], "remaining_spots": sum(self.rack.standing)})
-        if self.record:
-            self.trace.append({"t": self.t, "players": [{"id": a.id, "team": a.team, "position": a.position, "status": a.status.value, "ammo": len(a.inventory), "eta": a.eta, "crouched": a.crouched} for a in self.agents.values()], "arrows": [{"position": b.position, "state": b.state} for b in self.arrows.values() if b.state != "carried"], "spots": list(self.rack.standing)})
+
+    def _record_frame(self):
+        """Read-only replay snapshots; never consume RNG or change game metrics."""
+        self.trace.append({"t": self.t, "players": [{"id": a.id, "team": a.team, "position": a.position, "status": a.status.value, "ammo": len(a.inventory), "eta": a.eta, "crouched": a.crouched, "lives": a.lives, "respawn_at": a.respawn_at} for a in self.agents.values()], "arrows": [{"id": b.id, "position": b.position, "velocity": b.velocity, "state": b.state, "shooter": b.shooter} for b in self.arrows.values() if b.state != "carried"], "spots": list(self.rack.standing)})
 
     def summary(self):
         return {"seed": self.seed, "winner": self.winner, "duration_s": self.t, "clear_time_s": self.t if self.winner == "attack" else None,

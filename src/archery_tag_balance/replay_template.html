@@ -1,0 +1,133 @@
+<meta charset="utf-8">
+<div id="__REPLAY_ROOT__" class="archery-replay">
+  <style>
+    #__REPLAY_ROOT__{font:14px system-ui,-apple-system,sans-serif;color:#243344;background:#f6f8fb;border:1px solid #dce4ee;border-radius:14px;max-width:1120px;margin:12px auto;overflow:hidden}
+    #__REPLAY_ROOT__ *{box-sizing:border-box}
+    #__REPLAY_ROOT__ .top{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:white;border-bottom:1px solid #e0e7ef;flex-wrap:wrap}
+    #__REPLAY_ROOT__ .title{font-size:18px;font-weight:700} #__REPLAY_ROOT__ .subtitle{font-size:12px;color:#647589;margin-top:4px}
+    #__REPLAY_ROOT__ .clock{font:700 22px ui-monospace,monospace;color:#243344;text-align:right}
+    #__REPLAY_ROOT__ canvas{display:block;width:100%;height:auto;background:white}
+    #__REPLAY_ROOT__ .controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 18px;background:white;border-top:1px solid #e0e7ef}
+    #__REPLAY_ROOT__ button,#__REPLAY_ROOT__ select{font:inherit;border:1px solid #cad5e3;border-radius:7px;padding:7px 11px;background:white;color:#263b53;cursor:pointer}
+    #__REPLAY_ROOT__ button[data-play]{background:#244f80;color:white;border-color:#244f80;min-width:70px}
+    #__REPLAY_ROOT__ input[type=range]{flex:1;min-width:120px;accent-color:#346b9f}
+    #__REPLAY_ROOT__ .time{font:12px ui-monospace,monospace;min-width:105px;text-align:right}
+    #__REPLAY_ROOT__ .bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 18px}
+    #__REPLAY_ROOT__ .panel{background:white;border:1px solid #e0e7ef;border-radius:9px;padding:12px;min-width:0}
+    #__REPLAY_ROOT__ .panel-title{font-size:12px;font-weight:700;color:#61748b;margin-bottom:7px}
+    #__REPLAY_ROOT__ .roster{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font:12px ui-monospace,monospace}
+    #__REPLAY_ROOT__ .event{font-size:12px;line-height:1.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #__REPLAY_ROOT__ .footer{font-size:11px;line-height:1.6;color:#687a8e;padding:0 18px 12px}
+    @media(max-width:650px){#__REPLAY_ROOT__ .bottom{grid-template-columns:1fr}#__REPLAY_ROOT__ .title{font-size:16px}}
+  </style>
+  <div class="top">
+    <div><div class="title">攻防箭 · 比赛回放</div><div class="subtitle" data-description></div></div>
+    <div><div class="clock" data-clock></div><div class="subtitle" data-result style="text-align:right"></div></div>
+  </div>
+  <canvas width="1120" height="620" aria-label="攻防箭俯视动画与靶架正视图"></canvas>
+  <div class="controls">
+    <button type="button" data-play>播放</button><button type="button" data-reset>回到开局</button>
+    <button type="button" data-prev aria-label="上一帧">上一帧</button><button type="button" data-next aria-label="下一帧">下一帧</button>
+    <input data-seek type="range" min="0" step="0.01" value="0" aria-label="回放进度">
+    <span class="time" data-time></span>
+    <label>倍速 <select data-speed aria-label="播放速度"><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+  </div>
+  <div class="bottom"><div class="panel"><div class="panel-title">队员状态 · ID / 持箭 / 剩余命数 / η</div><div class="roster" data-roster></div></div><div class="panel"><div class="panel-title">最近事件</div><div data-events></div></div></div>
+  <div class="footer">红色：攻方；蓝色：守方；金色外圈：复活保护；黄色箭头：飞行箭（俯视投影）；灰点：地面箭。靶架正视图单独显示五个孔。回放为全局观察者视角；玩家策略仍使用局部观测。当前为脚本仿真及暂定参数。</div>
+  <script>
+  (()=>{
+    "use strict";
+    const root=document.getElementById("__REPLAY_ROOT__"), data=__REPLAY_DATA__;
+    const frames=data.frames, duration=data.duration, canvas=root.querySelector("canvas"), ctx=canvas.getContext("2d");
+    const find=s=>root.querySelector(s), play=find("[data-play]"), seek=find("[data-seek]"), speed=find("[data-speed]");
+    const A="#ce394d", D="#276cb0", GOLD="#df9c22", INK="#243344";
+    const L=data.field.length_m, W=data.field.width_m, scale=Math.min(840/L,438/W), left=45, top=67;
+    const X=x=>left+x*scale, Y=y=>top+(W-y)*scale;
+    let time=0,playing=false,last=null,rate=data.speed,raf=null;
+    seek.max=String(duration);
+    if(!Array.from(speed.options).some(o=>Number(o.value)===rate)){const o=document.createElement("option");o.value=String(rate);o.textContent=rate+"×";speed.appendChild(o);}
+    speed.value=String(rate);
+    const gaps=frames.slice(1).map((f,i)=>f.t-frames[i].t), maxGap=gaps.length?Math.max(...gaps):0;
+    find("[data-description]").textContent=`${L} × ${W} m · ${data.teams.attack.players} v ${data.teams.defense.players} · seed ${data.seed}`+(maxGap>0.25?" · 旧记录采样较稀，建议重新运行单局":` · 每 ${maxGap.toFixed(2)} 秒记录一帧`);
+    const circle=(x,y,r,fill,stroke=null,width=1)=>{ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}};
+    const text=(s,x,y,size=12,color=INK,align="left",bold=false)=>{ctx.font=`${bold?"600 ":""}${size}px system-ui,sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.fillText(s,x,y);};
+    function frameIndex(t){let lo=0,hi=frames.length-1;while(lo<hi){const m=Math.ceil((lo+hi)/2);if(frames[m].t<=t)lo=m;else hi=m-1;}return lo;}
+    function scene(t){
+      const i=frameIndex(t),a=frames[i],b=frames[Math.min(i+1,frames.length-1)],fraction=b.t>a.t?(t-a.t)/(b.t-a.t):0;
+      const mix=(p,q)=>p.map((v,j)=>v+(q[j]-v)*fraction),nextPlayers=new Map(b.players.map(p=>[p.id,p]));
+      const players=a.players.map(p=>{const n=nextPlayers.get(p.id);return {...p,position:n&&p.status!=="eliminated"&&n.status!=="eliminated"?mix(p.position,n.position):p.position};});
+      const nextArrows=new Map(b.arrows.filter(p=>p.id!==undefined).map(p=>[p.id,p]));
+      const arrows=a.arrows.map(p=>{const n=nextArrows.get(p.id);return {...p,position:p.state==="flying"&&n&&n.state==="flying"?mix(p.position,n.position):p.position};});
+      return {players,arrows,spots:a.spots};
+    }
+    function background(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle="white";ctx.fillRect(0,0,canvas.width,canvas.height);
+      const atk=data.teams.attack.move_x_bounds_m[1],def=data.teams.defense.move_x_bounds_m[0];
+      ctx.fillStyle="#fcf0f2";ctx.fillRect(X(0),Y(W),atk*scale,W*scale);
+      ctx.fillStyle="#eef5fc";ctx.fillRect(X(def),Y(W),(L-def)*scale,W*scale);
+      ctx.strokeStyle="#dfe6ef";ctx.lineWidth=0.65;
+      for(let x=0;x<=L;x++){ctx.beginPath();ctx.moveTo(X(x),Y(0));ctx.lineTo(X(x),Y(W));ctx.stroke();}
+      for(let y=0;y<=W;y++){ctx.beginPath();ctx.moveTo(X(0),Y(y));ctx.lineTo(X(L),Y(y));ctx.stroke();}
+      for(const [x,color,dash] of [[L/2,"#8b99a8",[5,5]],[atk,A,[]],[def,D,[]]]){ctx.strokeStyle=color;ctx.lineWidth=1.2;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(X(x),Y(0));ctx.lineTo(X(x),Y(W));ctx.stroke();}ctx.setLineDash([]);
+      ctx.strokeStyle="#697b8d";ctx.lineWidth=1;ctx.strokeRect(X(0),Y(W),L*scale,W*scale);
+      for(let x=0;x<=L;x+=2)text(String(x),X(x),Y(0)+20,10,"#687a8e","center");
+      for(let y=0;y<=W;y+=2)text(String(y),left-12,Y(y)+3,10,"#687a8e","right");
+      text("攻方 ATK",X(1),36,15,A,"left",true);text("守方 DEF",X(L-1),36,15,D,"right",true);
+      text("x / m",X(L/2),Y(0)+40,11,"#687a8e","center");
+      for(const o of data.obstacles){const [x,y]=o.center,[sx,sy]=o.size;ctx.fillStyle="#6a7d8f";ctx.fillRect(X(x-sx/2),Y(y+sy/2),sx*scale,sy*scale);ctx.strokeStyle="#41556a";ctx.strokeRect(X(x-sx/2),Y(y+sy/2),sx*scale,sy*scale);}
+      const [rx,ry]=data.rack.position;ctx.strokeStyle="#9b6c39";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(X(rx),Y(ry-data.rack.size[0]/2));ctx.lineTo(X(rx),Y(ry+data.rack.size[0]/2));ctx.stroke();
+      text("靶架",X(rx)-7,Y(ry)+32,11,"#8b5d2e","right");
+    }
+    function render(){
+      const s=scene(time);background();
+      for(const arrow of s.arrows){const [x,y,z]=arrow.position;
+        if(arrow.state==="ground"){circle(X(x),Y(y),2.1,"#a1adba");continue;}
+        const vx=arrow.velocity?arrow.velocity[0]:1,vy=arrow.velocity?arrow.velocity[1]:0,n=Math.hypot(vx,vy)||1;
+        const dx=vx/n,dy=-vy/n,px=X(x),py=Y(y),tail=14;
+        ctx.strokeStyle=GOLD;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px-dx*tail,py-dy*tail);ctx.lineTo(px,py);ctx.stroke();
+        ctx.fillStyle=GOLD;ctx.beginPath();ctx.moveTo(px+dx*4,py+dy*4);ctx.lineTo(px-dx*3-dy*3,py-dy*3+dx*3);ctx.lineTo(px-dx*3+dy*3,py-dy*3-dx*3);ctx.closePath();ctx.fill();
+      }
+      for(const p of s.players){if(p.status==="eliminated")continue;const [x,y]=p.position,col=p.team==="attack"?A:D;
+        circle(X(x)+1.5,Y(y)+3,Math.max(6,data.playerRadius*scale),"#2433441a");
+        circle(X(x),Y(y),Math.max(6,data.playerRadius*scale)*(p.crouched?0.8:1),col,p.status==="invincible"?GOLD:"white",p.status==="invincible"?3:1.3);
+        text(p.id.replace("attack_","A").replace("defense_","D"),X(x),Y(y)-13,11,col,"center",true);
+        text(`${p.ammo} 支`,X(x),Y(y)+22,10,"#566a7e","center");
+      }
+      const fx=917,fy=105,fw=170,fh=170,rs=fw/data.rack.size[0];
+      text("靶架正视图",fx+fw/2,77,14,INK,"center",true);ctx.fillStyle="#eee7dc";ctx.fillRect(fx,fy,fw,fh);ctx.strokeStyle="#9b6c39";ctx.lineWidth=1;ctx.strokeRect(fx,fy,fw,fh);
+      for(let k=0;k<data.rack.offsets.length;k++){const [h,v]=data.rack.offsets[k],alive=s.spots[k];circle(fx+fw/2+h*rs,fy+fh/2-v*rs,data.rack.radius*rs,alive?D:"white",alive?D:"#d0c5b6",1.5);text(String(k+1),fx+fw/2+h*rs,fy+fh/2-v*rs+4,12,alive?"white":"#8d7e6a","center");}
+      text(`已击落 ${s.spots.filter(v=>!v).length} / 5`,fx+fw/2,fy+fh+28,15,INK,"center",true);
+      const alive=team=>s.players.filter(p=>p.team===team&&p.status!=="eliminated").length;
+      text(`攻方在场  ${alive("attack")} / ${data.teams.attack.players}`,fx,fy+fh+70,13,A);
+      text(`守方在场  ${alive("defense")} / ${data.teams.defense.players}`,fx,fy+fh+96,13,D);
+      text(`地面箭    ${s.arrows.filter(a=>a.state==="ground").length}`,fx,fy+fh+135,12,"#62768b");
+      text(`飞行箭    ${s.arrows.filter(a=>a.state==="flying").length}`,fx,fy+fh+157,12,"#62768b");
+      text("数字为实时持箭数",left,570,11,"#6b7d90");text("金色外圈表示复活保护",left,590,11,"#6b7d90");
+      find("[data-clock]").textContent=`${Math.max(0,data.roundDuration-time).toFixed(1)} s`;
+      find("[data-result]").textContent=time>=duration&&data.winner?(data.winner==="attack"?"攻方获胜 · 五孔已清空":"守方获胜 · 时间结束"):"比赛中";
+      find("[data-time]").textContent=`${time.toFixed(1)} / ${duration.toFixed(1)} s`;seek.value=String(time);
+      const roster=find("[data-roster]");roster.replaceChildren();
+      for(const p of s.players){const line=document.createElement("div");line.style.color=p.team==="attack"?A:D;
+        const id=p.id.replace("attack_","A").replace("defense_","D"),lives=p.lives===null?"∞":p.lives===undefined?"?":p.lives;
+        const state=p.status==="eliminated"?(p.respawn_at!=null?`返场 ${Math.max(0,p.respawn_at-time).toFixed(1)}s`:"出局"):p.status==="invincible"?"保护":"在场";
+        line.textContent=`${id}  ${p.ammo}箭 / ${lives}命 / η${p.eta.toFixed(2)}  ${state}`;roster.appendChild(line);}
+      const log=find("[data-events]");log.replaceChildren();
+      const events=data.events.filter(e=>e.t<=time&&["hit","target","respawn","catch"].includes(e.kind)).slice(-4).reverse();
+      if(!events.length){const div=document.createElement("div");div.className="event";div.textContent="开局：取箭并向射击位置移动";log.appendChild(div);}
+      for(const e of events){const div=document.createElement("div");div.className="event";const who=id=>String(id).replace("attack_","A").replace("defense_","D");
+        const desc=e.kind==="hit"?`${who(e.shooter)} 命中 ${who(e.victim)}`:e.kind==="target"?`${who(e.shooter)} 击落靶点 ${e.spot+1}`:e.kind==="respawn"?`${who(e.agent)} 返场`:`${who(e.agent)} 接箭成功`;
+        div.textContent=`${e.t.toFixed(1)} s  ${desc}`;log.appendChild(div);}
+      root.dataset.currentTime=String(time);root.dataset.frameIndex=String(frameIndex(time));root.dataset.playing=String(playing);
+    }
+    function setPlaying(value){playing=value;play.textContent=playing?"暂停":"播放";last=null;if(playing&&raf===null)raf=requestAnimationFrame(tick);render();}
+    function tick(now){raf=null;if(!root.isConnected){playing=false;return;}if(!playing)return;if(last!==null)time=Math.min(duration,time+Math.max(0,Math.min(0.25,(now-last)/1000))*rate);last=now;if(time>=duration){playing=false;play.textContent="播放";last=null;}render();if(playing)raf=requestAnimationFrame(tick);}
+    play.addEventListener("click",()=>{if(!playing&&time>=duration)time=0;setPlaying(!playing);});
+    find("[data-reset]").addEventListener("click",()=>{setPlaying(false);time=0;render();});
+    seek.addEventListener("input",()=>{const requested=Number(seek.value)||0;setPlaying(false);time=Math.max(0,Math.min(duration,requested));render();});
+    find("[data-prev]").addEventListener("click",()=>{setPlaying(false);let i=frameIndex(time);if(frames[i].t>=time-1e-8)i--;time=frames[Math.max(0,i)].t;render();});
+    find("[data-next]").addEventListener("click",()=>{setPlaying(false);time=frames[Math.min(frames.length-1,frameIndex(time)+1)].t;render();});
+    speed.addEventListener("change",()=>{rate=Number(speed.value);last=null;});
+    render();
+  })();
+  </script>
+</div>

@@ -12,6 +12,14 @@ Evaluate asymmetric Archery Tag rules and five-spot target-rack placement throug
 
 The working scenario uses 120-second attack/defense rounds, a user-supplied 23 x 12 m field, and **one rack holding five fixed target spots**. Rack position is a design variable; individual spots do not move independently.
 
+## Watch a match in Colab
+
+[Open the animation notebook](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/02_animation.ipynb)
+
+Use a CPU runtime, run the cells, then click Play. The self-contained Canvas replay shows movement, flying and ground arrows, eliminations, respawns, protection, ammo, proficiency and five target spots on one rack. Pause, step, seek and change playback speed; export `replay.html` for offline playback. No GPU, display server, video encoder or additional plotting dependency is needed. Restart an existing runtime before loading updated simulator modules.
+
+Replay snapshots default to one per physics tick (0.1 seconds); resource metrics remain sampled at one second. Recording does not consume random numbers or alter simulation decisions. Change `record_interval_s` or `stride` to reduce export size; coarser recordings can miss short arrow flights. This is a replay of scripted, uncalibrated players.
+
 ## Run the first simulation
 
 [Open attack/defense simulation in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/01_attack_defense.ipynb)
@@ -49,6 +57,7 @@ The clone cell supports public repositories without credentials. For a private r
 | `docs/decisions.md` | Confirmed decisions, provisional assumptions, and open questions |
 | `docs/colab_workflow.md` | Colab/Git/Drive workflow |
 | `notebooks/00_setup.ipynb` | Clone, inspect configuration, and record repository version |
+| `notebooks/02_animation.ipynb` | Run one episode and play/export an interactive replay |
 | `src/archery_tag_balance/` | Entities, geometry, environment, policies and evaluation |
 | `tests/` | Physics, conservation, observation and rule checks |
 | `reports/` | Selected small, reviewed results |

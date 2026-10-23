@@ -1,7 +1,5 @@
 """Optional Matplotlib views; simulation itself has no plotting dependency."""
 
-from math import hypot
-
 
 def plot_layout(config, env=None, frame=None):
     import matplotlib.pyplot as plt
@@ -53,7 +51,7 @@ def plot_layout(config, env=None, frame=None):
     face.set(xlim=(-0.45, 0.45), ylim=(-0.45, 0.45), aspect="equal", xlabel="Horizontal (m)", ylabel="Vertical offset (m)")
     face.set_title("Rack front view\n0.75 x 0.75 m", fontsize=10)
     face.add_patch(Rectangle((-width / 2, -height / 2), width, height, facecolor="#ece6db", edgecolor="#8b5d2e"))
-    for k, (h, v) in enumerate(config["rack"]["offsets_hv_m"]):
+    for k, (h, v) in enumerate(env.rack.offsets if env else config["rack"]["offsets_hv_m"]):
         face.add_patch(Circle((h, v), config["rack"]["spot_radius_m"], facecolor="#276cb0" if standing[k] else "white", edgecolor="#276cb0"))
         face.text(h, v, str(k + 1), ha="center", va="center", color="white" if standing[k] else "#276cb0", fontsize=9)
     fig.suptitle("Provisional geometry and uncalibrated scripted players", fontsize=10, color="#6a7178")
@@ -75,37 +73,7 @@ def plot_resources(rows):
     return fig
 
 
-def animation_html(config, env, stride=2):
-    """Compact projected replay, including a separate front view of the rack."""
-    import matplotlib.pyplot as plt
-    from matplotlib.animation import FuncAnimation
-    from matplotlib.patches import Circle
-    fig = plot_layout(config, env=env)
-    ax, face = fig.axes
-    frames = env.trace[::stride]
-    if not frames:
-        raise ValueError("Record an episode first")
-    players = [ax.add_patch(Circle((0, 0), config["physics"]["player_radius_m"], visible=False)) for _ in env.agents]
-    ground = ax.scatter([], [], s=12, color="#969ba0")
-    flying = ax.scatter([], [], s=25, marker=">", color="#df941b")
-    disks = face.patches[1:]
-    import numpy as np
-
-    def update(index):
-        frame = frames[index]
-        for patch, a in zip(players, frame["players"]):
-            patch.center = a["position"]
-            patch.set_visible(a["status"] != "eliminated")
-            patch.set_facecolor("#ce394d" if a["team"] == "attack" else "#276cb0")
-            patch.set_edgecolor("#f0b52f" if a["status"] == "invincible" else patch.get_facecolor())
-        for artist, state in ((ground, "ground"), (flying, "flying")):
-            artist.set_offsets(np.array([a["position"][:2] for a in frame["arrows"] if a["state"] == state]).reshape(-1, 2))
-        for disk, alive in zip(disks, frame["spots"]):
-            disk.set_facecolor("#276cb0" if alive else "white")
-        ax.set_title(f"t = {frame['t']:.1f} s | remaining spots: {sum(frame['spots'])}", loc="left", fontsize=11)
-        return players + [ground, flying]
-
-    animation = FuncAnimation(fig, update, frames=len(frames), interval=150, blit=False)
-    html = animation.to_jshtml()
-    plt.close(fig)
-    return html
+def animation_html(config, env, stride=1, speed=2.0):
+    """Compatibility entry point for the dependency-free Canvas replay."""
+    from .replay import replay_html
+    return replay_html(config, env, stride=stride, speed=speed)
