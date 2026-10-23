@@ -1,0 +1,187 @@
+{
+  "schema_version": "0.3",
+  "status": "provisional_simulation",
+  "provenance": {
+    "field_dimensions": "user supplied 23 x 12 metres",
+    "rack_dimensions": "no rack in skirmish mode",
+    "obstacle_raw_input": "1.*6*1 metres (ambiguous)",
+    "obstacle_interpretation": "PROVISIONAL 1.0 x 0.6 x 1.0 metres; requires confirmation",
+    "coordinates": "symmetric assumed layout; center x=11.5, half centers x=5.75 and 17.25",
+    "all_other_parameters": "unmeasured engineering assumptions; scripts are not RL or calibrated humans",
+    "mode_assumptions": "own-half movement; 36 individually allocated opening arrows; full elimination wins, timeout draws; no target/catch revivals"
+  },
+  "time": {
+    "round_s": 120.0,
+    "dt_s": 0.1,
+    "deadline_rule": "all contacts in final tick resolve before timeout; no later flight is allowed"
+  },
+  "field": {
+    "length_m": 23.0,
+    "width_m": 12.0
+  },
+  "rack": null,
+  "teams": {
+    "attack": {
+      "players": 6,
+      "veterans": 2,
+      "lives": 2,
+      "initial_arrows": 0,
+      "spawn_x_m": 0.25,
+      "move_x_bounds_m": [
+        0.25,
+        11.25
+      ],
+      "shoot_x_bounds_m": [
+        0.25,
+        11.25
+      ],
+      "pickup_x_bounds_m": [
+        0,
+        11.5
+      ],
+      "protection_line_x_m": 3.0,
+      "respawn_delay_s": 3.0
+    },
+    "defense": {
+      "players": 6,
+      "veterans": 2,
+      "lives": 2,
+      "initial_arrows": 0,
+      "spawn_x_m": 22.75,
+      "move_x_bounds_m": [
+        11.75,
+        22.75
+      ],
+      "shoot_x_bounds_m": [
+        11.75,
+        22.75
+      ],
+      "pickup_x_bounds_m": [
+        11.5,
+        23.0
+      ],
+      "protection_line_x_m": 20.0,
+      "respawn_delay_s": 3.0
+    }
+  },
+  "opening": {
+    "arrow_positions_m": [],
+    "arrows_per_player": 3,
+    "center_x_m": 11.5,
+    "baseline_tolerance_m": 0.05
+  },
+  "obstacles": [
+    {
+      "id": "A_0",
+      "center_xy_m": [
+        5.75,
+        3.0
+      ],
+      "size_xyz_m": [
+        1.0,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "A_1",
+      "center_xy_m": [
+        5.75,
+        9.0
+      ],
+      "size_xyz_m": [
+        1.0,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "B_0",
+      "center_xy_m": [
+        17.25,
+        3.0
+      ],
+      "size_xyz_m": [
+        1.0,
+        0.6,
+        1.0
+      ]
+    },
+    {
+      "id": "B_1",
+      "center_xy_m": [
+        17.25,
+        9.0
+      ],
+      "size_xyz_m": [
+        1.0,
+        0.6,
+        1.0
+      ]
+    }
+  ],
+  "rules": {
+    "carry_limit": 3,
+    "min_shot_distance_m": 3.0,
+    "respawn_protection_s": 0.8,
+    "catch_enabled": false,
+    "catch_window_s": 0.25,
+    "catch_cooldown_s": 1.0,
+    "catch_min_cos": 0.70710678,
+    "catch_success_probability": 0.5,
+    "friendly_contact": "blocks_arrow_without_damage",
+    "respawn_ammo": 0,
+    "target_or_catch_revives": false,
+    "timeout_result": "draw"
+  },
+  "physics": {
+    "player_radius_m": 0.25,
+    "player_height_m": 1.7,
+    "crouched_height_m": 0.85,
+    "release_height_m": 1.25,
+    "crouched_release_height_m": 0.7,
+    "move_speed_m_s": 3.0,
+    "crouch_speed_fraction": 0.55,
+    "arrow_speed_m_s": 25.0,
+    "arrow_radius_m": 0.025,
+    "gravity_m_s2": 9.81,
+    "arrow_max_flight_s": 3.0,
+    "pickup_s": 0.3,
+    "pickup_radius_m": 0.7,
+    "vision_range_m": 28.0
+  },
+  "skill": {
+    "novice_eta_range": [
+      0.15,
+      0.45
+    ],
+    "veteran_eta_range": [
+      0.65,
+      0.95
+    ],
+    "novice_angle_sd_rad": 0.055,
+    "expert_angle_sd_rad": 0.008,
+    "novice_aim_s": 0.65,
+    "expert_aim_s": 0.25,
+    "novice_reload_s": 2.6,
+    "expert_reload_s": 1.2,
+    "movement_variance_multiplier": 1.0
+  },
+  "policy": {
+    "name": "symmetric_elimination_v1",
+    "navigation_cell_m": 0.5,
+    "decision_interval_s": 0.3,
+    "lane_spacing_m": 1.8
+  },
+  "metrics": {
+    "sample_every_s": 1.0
+  },
+  "rewards": {
+    "win": 10.0,
+    "hit_enemy": 1.0,
+    "target": 0.5,
+    "being_hit": -1.0,
+    "catch": 1.5
+  },
+  "mode": "skirmish"
+}

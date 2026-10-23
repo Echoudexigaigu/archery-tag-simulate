@@ -41,6 +41,8 @@ class Agent:
     opening_received: bool = False
     pickup_elapsed: float = 0.0
     crouched: bool = False
+    center_visited: bool = False
+    shoot_unlocked: bool = True
 
 
 @dataclass
@@ -53,6 +55,7 @@ class Arrow:
     shooter: str | None = None
     flight_left: float = 0.0
     opening_arrow: bool = False
+    opening_owner: str | None = None
 
 
 @dataclass(frozen=True)

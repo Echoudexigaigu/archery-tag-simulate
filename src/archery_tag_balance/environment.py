@@ -19,6 +19,7 @@ from .geometry import ballistic_velocity, lerp, segment_box, segment_cylinder
 class Environment:
     def __init__(self, config):
         self.config = deepcopy(config)
+        self.mode = config.get("mode", "attack_defense")
         self._validate()
         self.agents = {}
         self.done = False
@@ -29,16 +30,19 @@ class Environment:
             raise ValueError("Use a complete provisional simulation config, not unresolved baseline.json")
         if c["time"]["dt_s"] <= 0 or c["time"]["round_s"] <= 0:
             raise ValueError("Positive time parameters required")
-        if c["rack"]["spot_count"] != 5:
-            raise ValueError("This mode uses one five-spot rack")
-        width, height = c["rack"]["size_m"]
-        r = c["rack"]["spot_radius_m"]
-        offsets = c["rack"]["offsets_hv_m"]
-        if len(offsets) != 5 or any(abs(y) + r > width / 2 or abs(z) + r > height / 2 for y, z in offsets):
-            raise ValueError("All five spots must fit the rack")
-        for i, (y, z) in enumerate(offsets):
-            if any(hypot(y - a, z - b) < 2 * r for a, b in offsets[:i]):
-                raise ValueError("Target spots must not overlap")
+        if self.mode not in ("attack_defense", "skirmish"):
+            raise ValueError("Unknown game mode")
+        if self.mode == "attack_defense":
+            if c["rack"]["spot_count"] != 5:
+                raise ValueError("This mode uses one five-spot rack")
+            width, height = c["rack"]["size_m"]
+            r = c["rack"]["spot_radius_m"]
+            offsets = c["rack"]["offsets_hv_m"]
+            if len(offsets) != 5 or any(abs(y) + r > width / 2 or abs(z) + r > height / 2 for y, z in offsets):
+                raise ValueError("All five spots must fit the rack")
+            for i, (y, z) in enumerate(offsets):
+                if any(hypot(y - a, z - b) < 2 * r for a, b in offsets[:i]):
+                    raise ValueError("Target spots must not overlap")
         for team in ("attack", "defense"):
             t = c["teams"][team]
             if not 0 <= t["veterans"] <= t["players"]:
@@ -47,9 +51,10 @@ class Environment:
                 raise ValueError("Invalid resource allocation")
             if t["players"] < 1:
                 raise ValueError("Empty teams unsupported")
-        if len(c["opening"]["arrow_positions_m"]) != c["teams"]["attack"]["players"]:
+        if self.mode == "attack_defense" and len(c["opening"]["arrow_positions_m"]) != c["teams"]["attack"]["players"]:
             raise ValueError("Opening allocation must match attack player count in this scenario")
-        self._validate_rack()
+        if self.mode == "attack_defense":
+            self._validate_rack()
 
     def _validate_rack(self):
         c = self.config
@@ -70,6 +75,7 @@ class Environment:
         self.seed, self.rng = seed, random.Random(seed)
         self.t, self.tick, self.done, self.winner = 0.0, 0, False, None
         self.record, self.trace, self.events = record, [], []
+        self.step_events = []
         self.counts, self.cover_seconds, self.exposed_seconds = Counter(), 0.0, 0.0
         self.resource_curve, self._metric_clock = [], 0.0
         self._record_clock, self.record_interval_s = 0.0, record_interval_s
@@ -77,9 +83,11 @@ class Environment:
         flip = lambda y: W - y if mirror_y else y
         self.mirror_y = mirror_y
         self.obstacles = [Obstacle(b["id"], (b["center_xy_m"][0], flip(b["center_xy_m"][1])), tuple(b["size_xyz_m"])) for b in c["obstacles"]]
-        rx, ry, rz = c["rack"]["position_xyz_m"]
-        offsets = [(h * (-1 if mirror_y else 1), v) for h, v in c["rack"]["offsets_hv_m"]]
-        self.rack = TargetRack((rx, flip(ry), rz), tuple(c["rack"]["size_m"]), offsets, c["rack"]["spot_radius_m"])
+        self.rack = None
+        if self.mode == "attack_defense":
+            rx, ry, rz = c["rack"]["position_xyz_m"]
+            offsets = [(h * (-1 if mirror_y else 1), v) for h, v in c["rack"]["offsets_hv_m"]]
+            self.rack = TargetRack((rx, flip(ry), rz), tuple(c["rack"]["size_m"]), offsets, c["rack"]["spot_radius_m"])
         self.agents, self.arrows = {}, {}
         for team in ("attack", "defense"):
             spec = c["teams"][team]
@@ -97,11 +105,25 @@ class Environment:
                         self._carry(b, a)
         for x, y in c["opening"]["arrow_positions_m"]:
             self._new_arrow((x, flip(y), 0.0)).opening_arrow = True
+        self._setup_opening()
         self.total_arrows = len(self.arrows)
         self._sample_metrics()
         if self.record:
             self._record_frame()
         return self.get_observation(), {i: {"seed": seed} for i in self.agents}
+
+    def _setup_opening(self):
+        """Extension hook for mode-specific initial resources and phase state."""
+
+    def _update_rule_state(self):
+        """Extension hook after movement, contacts and pickups."""
+
+    def _resolve_winner(self):
+        if not any(self.rack.standing):
+            return "attack"
+        if self.t + 1e-8 >= self.config["time"]["round_s"]:
+            return "defense"
+        return None
 
     def _new_arrow(self, position):
         b = Arrow(len(self.arrows), tuple(position))
@@ -176,7 +198,7 @@ class Environment:
 
     def _release(self, a, action):
         c, p, skill = self.config, self.config["physics"], self.config["skill"]
-        if a.status != Status.ACTIVE or not a.has_bow or not a.inventory or a.reload_left > 1e-9 or action.aim is None:
+        if a.status != Status.ACTIVE or not a.shoot_unlocked or not a.has_bow or not a.inventory or a.reload_left > 1e-9 or action.aim is None:
             return
         xmin, xmax = c["teams"][a.team]["shoot_x_bounds_m"]
         if not xmin <= a.position[0] <= xmax:
@@ -226,20 +248,21 @@ class Environment:
             u = segment_box(p, q, *o.bounds(radius))
             if u is not None:
                 hits.append((u, 0, "obstacle", j))
-        rack = self.rack
-        rx, ry, rz = rack.position
-        # The rack faces -x. Its surrounding rectangular frame is solid.
-        if p[0] < rx <= q[0] and q[0] > p[0]:
-            u = (rx - p[0]) / (q[0] - p[0])
-            point = lerp(p, q, u)
-            if abs(point[1] - ry) <= rack.size[0] / 2 + radius and abs(point[2] - rz) <= rack.size[1] / 2 + radius:
-                spot = next((k for k in range(5) if hypot(point[1] - rack.spot(k)[1], point[2] - rack.spot(k)[2]) <= rack.radius + radius), -1)
-                # A spot needs the foam head to overlap its disk. A cleared hole
-                # permits passage only if the complete arrow head fits through it.
-                if spot >= 0 and not rack.standing[spot] and c["rack"]["cleared_holes_pass_through"] and hypot(point[1] - rack.spot(spot)[1], point[2] - rack.spot(spot)[2]) <= max(0, rack.radius - radius):
-                    pass
-                else:
-                    hits.append((u, 0, "rack", spot))
+        if self.rack is not None:
+            rack = self.rack
+            rx, ry, rz = rack.position
+            # The rack faces -x. Its surrounding rectangular frame is solid.
+            if p[0] < rx <= q[0] and q[0] > p[0]:
+                u = (rx - p[0]) / (q[0] - p[0])
+                point = lerp(p, q, u)
+                if abs(point[1] - ry) <= rack.size[0] / 2 + radius and abs(point[2] - rz) <= rack.size[1] / 2 + radius:
+                    spot = next((k for k in range(5) if hypot(point[1] - rack.spot(k)[1], point[2] - rack.spot(k)[2]) <= rack.radius + radius), -1)
+                    # A spot needs the foam head to overlap its disk. A cleared hole
+                    # permits passage only if the complete arrow head fits through it.
+                    if spot >= 0 and not rack.standing[spot] and c["rack"]["cleared_holes_pass_through"] and hypot(point[1] - rack.spot(spot)[1], point[2] - rack.spot(spot)[2]) <= max(0, rack.radius - radius):
+                        pass
+                    else:
+                        hits.append((u, 0, "rack", spot))
         for a in self.agents.values():
             if a.id == b.shooter or a.status == Status.ELIMINATED:
                 continue
@@ -329,6 +352,14 @@ class Environment:
                 b.velocity = (b.velocity[0], b.velocity[1], b.velocity[2] - c["physics"]["gravity_m_s2"] * dt)
                 b.flight_left -= dt
 
+    def _pickup_allowed(self, a, b):
+        return not (b.opening_arrow and a.team == "attack" and a.opening_received)
+
+    def _picked_up(self, a, b):
+        if b.opening_arrow and a.team == "attack":
+            a.opening_received = True
+        b.opening_arrow = False
+
     def _pickup(self, actions, dt):
         c, proposals = self.config, []
         for a in self.agents.values():
@@ -342,7 +373,7 @@ class Environment:
             for b in self.arrows.values():
                 if b.state != "ground" or not xmin <= b.position[0] <= xmax:
                     continue
-                if b.opening_arrow and a.team == "attack" and a.opening_received:
+                if not self._pickup_allowed(a, b):
                     continue
                 distance = hypot(b.position[0] - a.position[0], b.position[1] - a.position[1])
                 if distance <= c["physics"]["pickup_radius_m"]:
@@ -355,9 +386,7 @@ class Environment:
             if b.state != "ground":
                 continue
             self._carry(b, a)
-            if b.opening_arrow and a.team == "attack":
-                a.opening_received = True
-            b.opening_arrow = False
+            self._picked_up(a, b)
             a.pickup_elapsed = 0.0
             if a.status == Status.INVINCIBLE:
                 a.status = Status.ACTIVE
@@ -433,14 +462,12 @@ class Environment:
         self.t = round(self.t + dt, 10)
         self.tick += 1
         self._pickup(actions, dt)
-        if not any(self.rack.standing):
-            self.done, self.winner = True, "attack"
+        self._update_rule_state()
+        winner = self._resolve_winner()
+        if winner is not None:
+            self.done, self.winner = True, winner
             for a in self.agents.values():
-                rewards[a.id] += self.config["rewards"]["win"] if a.team == self.winner else 0.0
-        elif self.t + 1e-8 >= self.config["time"]["round_s"]:
-            self.done, self.winner = True, "defense"
-            for a in self.agents.values():
-                rewards[a.id] += self.config["rewards"]["win"] if a.team == self.winner else 0.0
+                rewards[a.id] += self.config["rewards"]["win"] if a.team == winner else 0.0
         self._metric_clock += dt
         if self._metric_clock + 1e-9 >= self.config["metrics"]["sample_every_s"] or self.done:
             self._sample_metrics(self._metric_clock)
@@ -467,11 +494,11 @@ class Environment:
         for b in self.agents.values():
             if b.team != a.team and b.status != Status.ELIMINATED and visible((*b.position, self.player_height(b) * 0.9)):
                 enemies.append({"id": b.id, "position": b.position, "velocity": b.velocity, "height": self.player_height(b), "status": b.status.value})
-        ground = [{"id": b.id, "position": b.position, "opening_arrow": b.opening_arrow} for b in self.arrows.values() if b.state == "ground" and visible((b.position[0], b.position[1], 0.05))]
+        ground = [{"id": b.id, "position": b.position, "opening_arrow": b.opening_arrow, "opening_owner": b.opening_owner} for b in self.arrows.values() if b.state == "ground" and visible((b.position[0], b.position[1], 0.05))]
         flying = [{"id": b.id, "position": b.position, "velocity": b.velocity} for b in self.arrows.values() if b.state == "flying" and visible(b.position)]
-        return {"time": self.t, "self": {"id": a.id, "team": a.team, "position": a.position, "velocity": a.velocity, "status": a.status.value, "eta": a.eta, "ammo": len(a.inventory), "has_bow": a.has_bow, "reload_left": a.reload_left, "aim_elapsed": a.aim_elapsed, "opening_received": a.opening_received},
+        return {"time": self.t, "self": {"id": a.id, "team": a.team, "position": a.position, "velocity": a.velocity, "status": a.status.value, "eta": a.eta, "ammo": len(a.inventory), "has_bow": a.has_bow, "reload_left": a.reload_left, "aim_elapsed": a.aim_elapsed, "opening_received": a.opening_received, "center_visited": a.center_visited, "shoot_unlocked": a.shoot_unlocked, "lives": a.lives, "spawn": a.spawn},
                 "enemies": enemies, "ground_arrows": ground, "flying_arrows": flying,
-                "spots": [{"id": k, "position": self.rack.spot(k), "standing": self.rack.standing[k]} for k in range(5)]}
+                "spots": [{"id": k, "position": self.rack.spot(k), "standing": self.rack.standing[k]} for k in range(5)] if self.rack is not None else []}
 
     def assert_invariants(self):
         carried = [bid for a in self.agents.values() for bid in a.inventory]
@@ -497,14 +524,14 @@ class Environment:
                 if any(not self.line_clear((*b.position, self.release_height(b)), center) for b in enemies):
                     self.cover_seconds += elapsed
         states = Counter(b.state for b in self.arrows.values())
-        self.resource_curve.append({"t": self.t, "ground": states["ground"], "carried": states["carried"], "flying": states["flying"], "attack_ammo": sum(len(a.inventory) for a in active if a.team == "attack"), "defense_ammo": sum(len(a.inventory) for a in active if a.team == "defense"), "shots": self.counts["shot"], "remaining_spots": sum(self.rack.standing)})
+        self.resource_curve.append({"t": self.t, "ground": states["ground"], "carried": states["carried"], "flying": states["flying"], "attack_ammo": sum(len(a.inventory) for a in active if a.team == "attack"), "defense_ammo": sum(len(a.inventory) for a in active if a.team == "defense"), "shots": self.counts["shot"], "remaining_spots": sum(self.rack.standing) if self.rack is not None else None})
 
     def _record_frame(self):
         """Read-only replay snapshots; never consume RNG or change game metrics."""
-        self.trace.append({"t": self.t, "players": [{"id": a.id, "team": a.team, "position": a.position, "status": a.status.value, "ammo": len(a.inventory), "eta": a.eta, "crouched": a.crouched, "lives": a.lives, "respawn_at": a.respawn_at} for a in self.agents.values()], "arrows": [{"id": b.id, "position": b.position, "velocity": b.velocity, "state": b.state, "shooter": b.shooter} for b in self.arrows.values() if b.state != "carried"], "spots": list(self.rack.standing)})
+        self.trace.append({"t": self.t, "players": [{"id": a.id, "team": a.team, "position": a.position, "status": a.status.value, "ammo": len(a.inventory), "eta": a.eta, "crouched": a.crouched, "lives": a.lives, "respawn_at": a.respawn_at, "shoot_unlocked": a.shoot_unlocked, "center_visited": a.center_visited} for a in self.agents.values()], "arrows": [{"id": b.id, "position": b.position, "velocity": b.velocity, "state": b.state, "shooter": b.shooter} for b in self.arrows.values() if b.state != "carried"], "spots": list(self.rack.standing) if self.rack is not None else []})
 
     def summary(self):
-        return {"seed": self.seed, "winner": self.winner, "duration_s": self.t, "clear_time_s": self.t if self.winner == "attack" else None,
-                "remaining_spots": sum(self.rack.standing), "shots": self.counts["shot"], "hits": self.counts["hit"], "pickups": self.counts["pickup"], "respawns": self.counts["respawn"],
+        return {"seed": self.seed, "winner": self.winner, "duration_s": self.t, "clear_time_s": self.t if self.mode == "attack_defense" and self.winner == "attack" else None,
+                "remaining_spots": sum(self.rack.standing) if self.rack is not None else None, "shots": self.counts["shot"], "hits": self.counts["hit"], "pickups": self.counts["pickup"], "respawns": self.counts["respawn"],
                 "cover_utilization": self.cover_seconds / self.exposed_seconds if self.exposed_seconds else None,
                 "eta": {a.id: a.eta for a in self.agents.values()}, "resource_curve": self.resource_curve}

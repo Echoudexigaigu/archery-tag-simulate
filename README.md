@@ -12,6 +12,14 @@ Evaluate asymmetric Archery Tag rules and five-spot target-rack placement throug
 
 The working scenario uses 120-second attack/defense rounds, a user-supplied 23 x 12 m field, and **one rack holding five fixed target spots**. Rack position is a design variable; individual spots do not move independently.
 
+## Play the 6v6 elimination mode
+
+[Open 6v6 mutual combat in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/03_skirmish_6v6.ipynb)
+
+Each player has two lives and an opening allocation of three arrows on x=11.5 m (36 arrows total). Both teams start empty at opposite baselines, collect their arrows, and return to their own baseline before shooting is unlocked. The rule is enforced by the environment. The four assumed bunker centers are (5.75,3), (5.75,9), (17.25,3), (17.25,9). Other physics, skill and respawn parameters are inherited. Each side stays in its own half; this mode has no target rack.
+
+A hit consumes one life, drops carried arrows and starts the same 3-second empty respawn, with 0.8-second protection. A second hit eliminates the player permanently. An already completed opening route remains completed after respawn. Full team elimination wins; timeout at 120 seconds or mutual elimination in the same tick draws. These victory/tie conventions and opening allocations are explicit model assumptions. Draws are counted separately in batch statistics. See [mode details](docs/skirmish.md).
+
 ## Watch a match in Colab
 
 [Open the animation notebook](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/02_animation.ipynb)
@@ -58,6 +66,7 @@ The clone cell supports public repositories without credentials. For a private r
 | `docs/colab_workflow.md` | Colab/Git/Drive workflow |
 | `notebooks/00_setup.ipynb` | Clone, inspect configuration, and record repository version |
 | `notebooks/02_animation.ipynb` | Run one episode and play/export an interactive replay |
+| `notebooks/03_skirmish_6v6.ipynb` | Symmetric two-life elimination mode with replay and separate draw statistics |
 | `src/archery_tag_balance/` | Entities, geometry, environment, policies and evaluation |
 | `tests/` | Physics, conservation, observation and rule checks |
 | `reports/` | Selected small, reviewed results |

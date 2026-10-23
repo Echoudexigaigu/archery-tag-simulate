@@ -21,7 +21,7 @@
     @media(max-width:650px){#__REPLAY_ROOT__ .bottom{grid-template-columns:1fr}#__REPLAY_ROOT__ .title{font-size:16px}}
   </style>
   <div class="top">
-    <div><div class="title">攻防箭 · 比赛回放</div><div class="subtitle" data-description></div></div>
+    <div><div class="title" data-title>攻防箭 · 比赛回放</div><div class="subtitle" data-description></div></div>
     <div><div class="clock" data-clock></div><div class="subtitle" data-result style="text-align:right"></div></div>
   </div>
   <canvas width="1120" height="620" aria-label="攻防箭俯视动画与靶架正视图"></canvas>
@@ -33,11 +33,14 @@
     <label>倍速 <select data-speed aria-label="播放速度"><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
   </div>
   <div class="bottom"><div class="panel"><div class="panel-title">队员状态 · ID / 持箭 / 剩余命数 / η</div><div class="roster" data-roster></div></div><div class="panel"><div class="panel-title">最近事件</div><div data-events></div></div></div>
-  <div class="footer">红色：攻方；蓝色：守方；金色外圈：复活保护；黄色箭头：飞行箭（俯视投影）；灰点：地面箭。靶架正视图单独显示五个孔。回放为全局观察者视角；玩家策略仍使用局部观测。当前为脚本仿真及暂定参数。</div>
+  <div class="footer" data-footer>红色：攻方；蓝色：守方；金色外圈：复活保护；黄色箭头：飞行箭（俯视投影）；灰点：地面箭。靶架正视图单独显示五个孔。回放为全局观察者视角；玩家策略仍使用局部观测。当前为脚本仿真及暂定参数。</div>
   <script>
   (()=>{
     "use strict";
     const root=document.getElementById("__REPLAY_ROOT__"), data=__REPLAY_DATA__;
+    const skirmish=data.mode==="skirmish", label=team=>team==="attack"?(skirmish?"红队":"攻方"):(skirmish?"蓝队":"守方");
+    const short=id=>String(id).replace("attack_",skirmish?"R":"A").replace("defense_",skirmish?"B":"D");
+    if(skirmish){root.querySelector("[data-title]").textContent="攻防箭 · 6v6 对攻回放";root.querySelector("[data-footer]").textContent="红蓝双方各两命；中线取箭并回到底线才解锁射击。黄色箭头：飞行箭；灰点：地面箭；金圈：复活保护。全局回放视角，脚本策略使用局部观测；暂定参数。";}
     const frames=data.frames, duration=data.duration, canvas=root.querySelector("canvas"), ctx=canvas.getContext("2d");
     const find=s=>root.querySelector(s), play=find("[data-play]"), seek=find("[data-seek]"), speed=find("[data-speed]");
     const A="#ce394d", D="#276cb0", GOLD="#df9c22", INK="#243344";
@@ -72,11 +75,11 @@
       ctx.strokeStyle="#697b8d";ctx.lineWidth=1;ctx.strokeRect(X(0),Y(W),L*scale,W*scale);
       for(let x=0;x<=L;x+=2)text(String(x),X(x),Y(0)+20,10,"#687a8e","center");
       for(let y=0;y<=W;y+=2)text(String(y),left-12,Y(y)+3,10,"#687a8e","right");
-      text("攻方 ATK",X(1),36,15,A,"left",true);text("守方 DEF",X(L-1),36,15,D,"right",true);
+      text(skirmish?"红队 RED":"攻方 ATK",X(1),36,15,A,"left",true);text(skirmish?"蓝队 BLUE":"守方 DEF",X(L-1),36,15,D,"right",true);
       text("x / m",X(L/2),Y(0)+40,11,"#687a8e","center");
       for(const o of data.obstacles){const [x,y]=o.center,[sx,sy]=o.size;ctx.fillStyle="#6a7d8f";ctx.fillRect(X(x-sx/2),Y(y+sy/2),sx*scale,sy*scale);ctx.strokeStyle="#41556a";ctx.strokeRect(X(x-sx/2),Y(y+sy/2),sx*scale,sy*scale);}
-      const [rx,ry]=data.rack.position;ctx.strokeStyle="#9b6c39";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(X(rx),Y(ry-data.rack.size[0]/2));ctx.lineTo(X(rx),Y(ry+data.rack.size[0]/2));ctx.stroke();
-      text("靶架",X(rx)-7,Y(ry)+32,11,"#8b5d2e","right");
+      if(data.rack){const [rx,ry]=data.rack.position;ctx.strokeStyle="#9b6c39";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(X(rx),Y(ry-data.rack.size[0]/2));ctx.lineTo(X(rx),Y(ry+data.rack.size[0]/2));ctx.stroke();
+      text("靶架",X(rx)-7,Y(ry)+32,11,"#8b5d2e","right");}
     }
     function render(){
       const s=scene(time);background();
@@ -90,32 +93,42 @@
       for(const p of s.players){if(p.status==="eliminated")continue;const [x,y]=p.position,col=p.team==="attack"?A:D;
         circle(X(x)+1.5,Y(y)+3,Math.max(6,data.playerRadius*scale),"#2433441a");
         circle(X(x),Y(y),Math.max(6,data.playerRadius*scale)*(p.crouched?0.8:1),col,p.status==="invincible"?GOLD:"white",p.status==="invincible"?3:1.3);
-        text(p.id.replace("attack_","A").replace("defense_","D"),X(x),Y(y)-13,11,col,"center",true);
+        text(short(p.id),X(x),Y(y)-13,11,col,"center",true);
         text(`${p.ammo} 支`,X(x),Y(y)+22,10,"#566a7e","center");
       }
-      const fx=917,fy=105,fw=170,fh=170,rs=fw/data.rack.size[0];
+      const fx=917,fy=105,fw=170,fh=170;
+      if(data.rack){const rs=fw/data.rack.size[0];
       text("靶架正视图",fx+fw/2,77,14,INK,"center",true);ctx.fillStyle="#eee7dc";ctx.fillRect(fx,fy,fw,fh);ctx.strokeStyle="#9b6c39";ctx.lineWidth=1;ctx.strokeRect(fx,fy,fw,fh);
       for(let k=0;k<data.rack.offsets.length;k++){const [h,v]=data.rack.offsets[k],alive=s.spots[k];circle(fx+fw/2+h*rs,fy+fh/2-v*rs,data.rack.radius*rs,alive?D:"white",alive?D:"#d0c5b6",1.5);text(String(k+1),fx+fw/2+h*rs,fy+fh/2-v*rs+4,12,alive?"white":"#8d7e6a","center");}
       text(`已击落 ${s.spots.filter(v=>!v).length} / 5`,fx+fw/2,fy+fh+28,15,INK,"center",true);
+      }else{
+        text("剩余总命数",fx+fw/2,100,15,INK,"center",true);
+        for(const [team,col,yy] of [["attack",A,155],["defense",D,210]]){
+          const lives=s.players.filter(p=>p.team===team).reduce((n,p)=>n+p.lives,0);
+          text(`${label(team)}  ${lives} / ${data.teams[team].players*data.teams[team].lives}`,fx+fw/2,yy,21,col,"center",true);
+        }
+        const unlocked=s.players.filter(p=>p.shoot_unlocked).length;
+        text(`已解锁射击 ${unlocked} / ${s.players.length}`,fx+fw/2,270,12,INK,"center");
+      }
       const alive=team=>s.players.filter(p=>p.team===team&&p.status!=="eliminated").length;
-      text(`攻方在场  ${alive("attack")} / ${data.teams.attack.players}`,fx,fy+fh+70,13,A);
-      text(`守方在场  ${alive("defense")} / ${data.teams.defense.players}`,fx,fy+fh+96,13,D);
+      text(`${label("attack")}在场  ${alive("attack")} / ${data.teams.attack.players}`,fx,fy+fh+70,13,A);
+      text(`${label("defense")}在场  ${alive("defense")} / ${data.teams.defense.players}`,fx,fy+fh+96,13,D);
       text(`地面箭    ${s.arrows.filter(a=>a.state==="ground").length}`,fx,fy+fh+135,12,"#62768b");
       text(`飞行箭    ${s.arrows.filter(a=>a.state==="flying").length}`,fx,fy+fh+157,12,"#62768b");
       text("数字为实时持箭数",left,570,11,"#6b7d90");text("金色外圈表示复活保护",left,590,11,"#6b7d90");
       find("[data-clock]").textContent=`${Math.max(0,data.roundDuration-time).toFixed(1)} s`;
-      find("[data-result]").textContent=time>=duration&&data.winner?(data.winner==="attack"?"攻方获胜 · 五孔已清空":"守方获胜 · 时间结束"):"比赛中";
+      find("[data-result]").textContent=time>=duration&&data.winner?(skirmish?(data.winner==="draw"?"平局 · 同归于尽或时间结束":`${label(data.winner)}获胜 · 对方命数耗尽`):(data.winner==="attack"?"攻方获胜 · 五孔已清空":"守方获胜 · 时间结束")):"比赛中";
       find("[data-time]").textContent=`${time.toFixed(1)} / ${duration.toFixed(1)} s`;seek.value=String(time);
       const roster=find("[data-roster]");roster.replaceChildren();
       for(const p of s.players){const line=document.createElement("div");line.style.color=p.team==="attack"?A:D;
-        const id=p.id.replace("attack_","A").replace("defense_","D"),lives=p.lives===null?"∞":p.lives===undefined?"?":p.lives;
+        const id=short(p.id),lives=p.lives===null?"∞":p.lives===undefined?"?":p.lives;
         const state=p.status==="eliminated"?(p.respawn_at!=null?`返场 ${Math.max(0,p.respawn_at-time).toFixed(1)}s`:"出局"):p.status==="invincible"?"保护":"在场";
-        line.textContent=`${id}  ${p.ammo}箭 / ${lives}命 / η${p.eta.toFixed(2)}  ${state}`;roster.appendChild(line);}
+        line.textContent=`${id}  ${p.ammo}箭 / ${lives}命 / η${p.eta.toFixed(2)}  ${state}${skirmish&&!p.shoot_unlocked?(p.center_visited?" · 待回底线":" · 待到中线"):""}`;roster.appendChild(line);}
       const log=find("[data-events]");log.replaceChildren();
-      const events=data.events.filter(e=>e.t<=time&&["hit","target","respawn","catch"].includes(e.kind)).slice(-4).reverse();
+      const events=data.events.filter(e=>e.t<=time&&["hit","target","respawn","catch","shoot_unlocked"].includes(e.kind)).slice(-4).reverse();
       if(!events.length){const div=document.createElement("div");div.className="event";div.textContent="开局：取箭并向射击位置移动";log.appendChild(div);}
-      for(const e of events){const div=document.createElement("div");div.className="event";const who=id=>String(id).replace("attack_","A").replace("defense_","D");
-        const desc=e.kind==="hit"?`${who(e.shooter)} 命中 ${who(e.victim)}`:e.kind==="target"?`${who(e.shooter)} 击落靶点 ${e.spot+1}`:e.kind==="respawn"?`${who(e.agent)} 返场`:`${who(e.agent)} 接箭成功`;
+      for(const e of events){const div=document.createElement("div");div.className="event";const who=short;
+        const desc=e.kind==="hit"?`${who(e.shooter)} 命中 ${who(e.victim)}`:e.kind==="target"?`${who(e.shooter)} 击落靶点 ${e.spot+1}`:e.kind==="respawn"?`${who(e.agent)} 返场`:e.kind==="shoot_unlocked"?`${who(e.agent)} 回到底线，射击解锁`:`${who(e.agent)} 接箭成功`;
         div.textContent=`${e.t.toFixed(1)} s  ${desc}`;log.appendChild(div);}
       root.dataset.currentTime=String(time);root.dataset.frameIndex=String(frameIndex(time));root.dataset.playing=String(playing);
     }

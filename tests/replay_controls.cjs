@@ -52,7 +52,7 @@ fire('play'); advance(2000); advance(2100);
 assert.ok(Math.abs(Number(first.dataset.currentTime) - 12.55) < 1e-8);
 fire('play');
 get('seek').value = get('seek').max; fire('seek', 'input');
-assert.ok(get('result').textContent.includes('获胜'));
+assert.ok(/获胜|平局/.test(get('result').textContent));
 assert.equal(Number(first.dataset.currentTime), Number(get('seek').max));
 fire('play'); assert.equal(Number(first.dataset.currentTime), 0, 'playing a completed replay restarts it');
 fire('reset'); assert.equal(first.dataset.playing, 'false');

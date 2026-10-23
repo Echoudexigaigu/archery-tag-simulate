@@ -29,12 +29,12 @@ def replay_payload(config, env, stride=1, speed=2.0):
     # Copy actual geometry so mirrored episodes render consistently.
     return compact({"frames": frames, "events": env.events, "speed": speed,
                     "duration": frames[-1]["t"], "roundDuration": config["time"]["round_s"],
-                    "winner": env.winner, "seed": env.seed,
+                    "winner": env.winner, "seed": env.seed, "mode": env.mode,
                     "field": config["field"], "teams": config["teams"],
                     "playerRadius": config["physics"]["player_radius_m"],
                     "obstacles": [{"id": o.id, "center": o.center, "size": o.size} for o in env.obstacles],
                     "rack": {"position": env.rack.position, "size": env.rack.size,
-                             "offsets": env.rack.offsets, "radius": env.rack.radius}})
+                             "offsets": env.rack.offsets, "radius": env.rack.radius} if env.rack is not None else None})
 
 
 def replay_html(config, env, stride=1, speed=2.0):

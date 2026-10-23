@@ -8,6 +8,7 @@ import statistics
 
 from .environment import Environment
 from .policies import Navigator, ScriptedPolicy
+from .skirmish import SkirmishEnvironment, SkirmishPolicy
 
 
 def wilson(wins, n, z=1.959963984540054):
@@ -33,11 +34,13 @@ class SimulationEngine:
         self.config = deepcopy(config)
 
     def episode(self, seed=0, record=False, check_invariants=False, record_interval_s=0.1):
-        env = Environment(self.config)
+        skirmish = self.config.get("mode") == "skirmish"
+        env = SkirmishEnvironment(self.config) if skirmish else Environment(self.config)
+        policy_class = SkirmishPolicy if skirmish else ScriptedPolicy
         mirror = bool(seed % 2)
         env.reset(seed=seed, record=record, mirror_y=mirror, record_interval_s=record_interval_s)
         navigator = Navigator(self.config, env.obstacles)
-        policies = {aid: ScriptedPolicy(self.config, navigator, aid, seed * 101 + i + 17, mirror) for i, aid in enumerate(env.agents)}
+        policies = {aid: policy_class(self.config, navigator, aid, seed * 101 + i + 17, mirror) for i, aid in enumerate(env.agents)}
         next_decision, actions = -1.0, {}
         while not env.done:
             if env.t + 1e-9 >= next_decision:
@@ -64,13 +67,19 @@ class SimulationEngine:
 def summarize(rows):
     n = len(rows)
     wins = sum(r["winner"] == "attack" for r in rows)
+    defense_wins = sum(r["winner"] == "defense" for r in rows)
+    draws = sum(r["winner"] == "draw" for r in rows)
+    decisive = wins + defense_wins
     cleared = [r["clear_time_s"] for r in rows if r["clear_time_s"] is not None]
     covers = [r["cover_utilization"] for r in rows if r["cover_utilization"] is not None]
-    return {"episodes": n, "attack_wins": wins, "defense_wins": n - wins,
+    return {"episodes": n, "attack_wins": wins, "defense_wins": defense_wins, "draws": draws,
+            "draw_rate": draws / n if n else None,
+            "attack_win_rate_given_decisive": wins / decisive if decisive else None,
+            "wilson_95_given_decisive": wilson(wins, decisive),
             "attack_win_rate": wins / n if n else None, "wilson_95": wilson(wins, n),
             "mean_duration_s": statistics.mean(r["duration_s"] for r in rows) if rows else None,
             "mean_clear_time_given_success_s": statistics.mean(cleared) if cleared else None,
-            "mean_remaining_spots": statistics.mean(r["remaining_spots"] for r in rows) if rows else None,
+            "mean_remaining_spots": statistics.mean(r["remaining_spots"] for r in rows if r["remaining_spots"] is not None) if any(r["remaining_spots"] is not None for r in rows) else None,
             "mean_shots": statistics.mean(r["shots"] for r in rows) if rows else None,
             "mean_cover_utilization": statistics.mean(covers) if covers else None}
 
