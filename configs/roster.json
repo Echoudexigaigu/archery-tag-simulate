@@ -1,0 +1,74 @@
+{
+  "attack_0": {
+    "name": "示例1红",
+    "placeholder": true,
+    "muzzle_speed_fps": 120,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "attack_1": {
+    "name": "示例2红",
+    "placeholder": true,
+    "muzzle_speed_fps": 121,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "attack_2": {
+    "name": "示例3红",
+    "placeholder": true,
+    "muzzle_speed_fps": 122,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "attack_3": {
+    "name": "示例4红",
+    "placeholder": true,
+    "muzzle_speed_fps": 123,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "attack_4": {
+    "name": "示例5红",
+    "placeholder": true,
+    "muzzle_speed_fps": 124,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "attack_5": {
+    "name": "示例6红",
+    "placeholder": true,
+    "muzzle_speed_fps": 125,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "defense_0": {
+    "name": "示例1蓝",
+    "placeholder": true,
+    "muzzle_speed_fps": 120,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "defense_1": {
+    "name": "示例2蓝",
+    "placeholder": true,
+    "muzzle_speed_fps": 121,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "defense_2": {
+    "name": "示例3蓝",
+    "placeholder": true,
+    "muzzle_speed_fps": 122,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "defense_3": {
+    "name": "示例4蓝",
+    "placeholder": true,
+    "muzzle_speed_fps": 123,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "defense_4": {
+    "name": "示例5蓝",
+    "placeholder": true,
+    "muzzle_speed_fps": 124,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  },
+  "defense_5": {
+    "name": "示例6蓝",
+    "placeholder": true,
+    "muzzle_speed_fps": 125,
+    "note": "占位参数；非真实选手评分。箭速为人+弓+赛事箭的组合测量值。"
+  }
+}

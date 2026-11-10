@@ -1,0 +1,340 @@
+{
+  "schema_version": "0.9-runout-rebound-tactical-caches-v7",
+  "status": "provisional_simulation",
+  "provenance": {
+    "field_dimensions": "user supplied 23 x 12 metres",
+    "rack_dimensions": "Two 0.75 x 0.75 m five-spot racks; geometric contact plus probabilistic knockdown",
+    "obstacle_raw_input": "1.*6*1 metres (ambiguous)",
+    "obstacle_interpretation": "Transverse 0.18 x 1.2 x 1.0 m panels; width +20% from v3",
+    "coordinates": "Own left: +y for attack, -y for defense. Left forward 0.5 m, right backward 1.5 m.",
+    "all_other_parameters": "Exploratory v5: bounded power/elevation, per-arrow physical landing times, stable aim personalities, steady-aim benefit, minority follow-through steps, teammate radio arrow reports and unique recovery assignments. Own-half collection only. Ground contact starts a nonlethal, nonpickable settling phase with short forward-biased runout; absorbing nets at all four edges. Runout values are uncalibrated approximations.",
+    "mode_assumptions": "six roles; single-arrow; synchronized opening; body life lost = 1 point; cleared target spot = 1 point; full elimination wins early, otherwise compare total points at timeout; targets do not remove a randomly chosen player life"
+  },
+  "time": {
+    "round_s": 120.0,
+    "dt_s": 0.1,
+    "deadline_rule": "all contacts in final tick resolve before timeout; no later flight is allowed"
+  },
+  "field": {
+    "length_m": 23.0,
+    "width_m": 12.0
+  },
+  "rack": null,
+  "teams": {
+    "attack": {
+      "players": 6,
+      "veterans": 2,
+      "lives": 2,
+      "initial_arrows": 0,
+      "spawn_x_m": 0.25,
+      "move_x_bounds_m": [
+        0.25,
+        11.25
+      ],
+      "shoot_x_bounds_m": [
+        0.25,
+        11.25
+      ],
+      "pickup_x_bounds_m": [
+        0,
+        11.5
+      ],
+      "protection_line_x_m": 3.0,
+      "respawn_delay_s": 3.0
+    },
+    "defense": {
+      "players": 6,
+      "veterans": 2,
+      "lives": 2,
+      "initial_arrows": 0,
+      "spawn_x_m": 22.75,
+      "move_x_bounds_m": [
+        11.75,
+        22.75
+      ],
+      "shoot_x_bounds_m": [
+        11.75,
+        22.75
+      ],
+      "pickup_x_bounds_m": [
+        11.5,
+        23.0
+      ],
+      "protection_line_x_m": 20.0,
+      "respawn_delay_s": 3.0
+    }
+  },
+  "opening": {
+    "arrow_positions_m": [],
+    "arrows_per_player": 3,
+    "center_x_m": 11.5,
+    "baseline_tolerance_m": 0.05,
+    "synchronized_start": true,
+    "clear_running_lanes": true
+  },
+  "obstacles": [
+    {
+      "id": "A_0",
+      "center_xy_m": [
+        4.25,
+        3.0
+      ],
+      "size_xyz_m": [
+        0.18,
+        1.2,
+        1.0
+      ]
+    },
+    {
+      "id": "A_1",
+      "center_xy_m": [
+        6.25,
+        9.0
+      ],
+      "size_xyz_m": [
+        0.18,
+        1.2,
+        1.0
+      ]
+    },
+    {
+      "id": "B_0",
+      "center_xy_m": [
+        16.75,
+        3.0
+      ],
+      "size_xyz_m": [
+        0.18,
+        1.2,
+        1.0
+      ]
+    },
+    {
+      "id": "B_1",
+      "center_xy_m": [
+        18.75,
+        9.0
+      ],
+      "size_xyz_m": [
+        0.18,
+        1.2,
+        1.0
+      ]
+    }
+  ],
+  "rules": {
+    "carry_limit": 3,
+    "min_shot_distance_m": 3.0,
+    "respawn_protection_s": 0.8,
+    "catch_enabled": false,
+    "catch_window_s": 0.25,
+    "catch_cooldown_s": 1.0,
+    "catch_min_cos": 0.70710678,
+    "catch_success_probability": 0.5,
+    "friendly_contact": "blocks_arrow_without_damage",
+    "respawn_ammo": 0,
+    "target_or_catch_revives": false,
+    "timeout_result": "draw",
+    "single_arrow_shooting": true,
+    "stash_radius_m": 0.75,
+    "timeout_scoring": true
+  },
+  "physics": {
+    "player_radius_m": 0.25,
+    "player_height_m": 1.7,
+    "crouched_height_m": 0.85,
+    "release_height_m": 1.25,
+    "crouched_release_height_m": 0.7,
+    "move_speed_m_s": 4.2,
+    "crouch_speed_fraction": 0.55,
+    "arrow_speed_m_s": 18.0,
+    "arrow_radius_m": 0.025,
+    "gravity_m_s2": 9.81,
+    "arrow_max_flight_s": 2.4,
+    "pickup_s": 0.65,
+    "pickup_radius_m": 0.7,
+    "vision_range_m": 28.0,
+    "linear_drag_s_inv": 0.55
+  },
+  "skill": {
+    "novice_eta_range": [
+      0.15,
+      0.45
+    ],
+    "veteran_eta_range": [
+      0.65,
+      0.95
+    ],
+    "novice_angle_sd_rad": 0.095,
+    "expert_angle_sd_rad": 0.032,
+    "novice_aim_s": 1.4,
+    "expert_aim_s": 0.9,
+    "novice_reload_s": 6.0,
+    "expert_reload_s": 4.0,
+    "movement_variance_multiplier": 1.0
+  },
+  "policy": {
+    "name": "tactical_cache_rebound_v7",
+    "navigation_cell_m": 0.5,
+    "decision_interval_s": 0.2,
+    "lane_spacing_m": 1.8,
+    "cover_based": true,
+    "max_advance_past_bunker_m": 2.0,
+    "engage_distance_m": 14.5,
+    "moving_target_lead_fraction": 0.55,
+    "one_person_cover": true,
+    "mirror_layout": false,
+    "six_roles": true,
+    "varied_v5": true
+  },
+  "metrics": {
+    "sample_every_s": 1.0
+  },
+  "rewards": {
+    "win": 10.0,
+    "hit_enemy": 1.0,
+    "target": 1.0,
+    "being_hit": -1.0,
+    "catch": 1.5
+  },
+  "mode": "skirmish",
+  "evasion": {
+    "enabled": true,
+    "movement_enabled": true,
+    "novice_probability": 0.12,
+    "expert_probability": 0.3,
+    "moving_bonus": 0.12,
+    "probability_cap": 0.5,
+    "reaction_s": 0.18,
+    "cooldown_s": 2.0,
+    "lookahead_s": 0.5,
+    "danger_radius_m": 0.48,
+    "stamina_enabled": true,
+    "stamina_recovery_per_s": 0.065,
+    "movement_cost": 0.34,
+    "duck_cost": 0.25,
+    "roll_cost": 0.3,
+    "movement_cooldown_s": 1.1,
+    "movement_duration_s": 0.4,
+    "fatigue_cooldown_multiplier": 2.0
+  },
+  "skirmish_racks": [
+    {
+      "team": "attack",
+      "position_xyz_m": [
+        8.7,
+        9.0,
+        0.8
+      ],
+      "size_m": [
+        0.75,
+        0.75
+      ],
+      "spot_radius_m": 0.085,
+      "offsets_hv_m": [
+        [
+          -0.21,
+          -0.21
+        ],
+        [
+          0.21,
+          -0.21
+        ],
+        [
+          -0.21,
+          0.21
+        ],
+        [
+          0.21,
+          0.21
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "team": "defense",
+      "position_xyz_m": [
+        14.3,
+        3.0,
+        0.8
+      ],
+      "size_m": [
+        0.75,
+        0.75
+      ],
+      "spot_radius_m": 0.085,
+      "offsets_hv_m": [
+        [
+          -0.21,
+          -0.21
+        ],
+        [
+          0.21,
+          -0.21
+        ],
+        [
+          -0.21,
+          0.21
+        ],
+        [
+          0.21,
+          0.21
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ]
+    }
+  ],
+  "human_shooting": {
+    "novice_nock_s": 4.9,
+    "expert_nock_s": 3.1,
+    "novice_aim_s": 2.0,
+    "expert_aim_s": 1.2,
+    "timing_cv": 0.27,
+    "novice_angle_sd_rad": 0.125,
+    "expert_angle_sd_rad": 0.045,
+    "fumble_probability": 0.16,
+    "poor_release_probability": 0.14,
+    "settle_s": 0.9
+  },
+  "target_scoring": {
+    "knockdown_probability": 0.86,
+    "reference_speed_m_s": 10.0,
+    "body_point": 1,
+    "target_point": 1
+  },
+  "flight_variation": {
+    "max_speed_m_s": 20.0,
+    "max_elevation_degrees": 28.0
+  },
+  "ground_runout": {
+    "enabled": true,
+    "min_distance_m": 0.3,
+    "max_distance_m": 6.0,
+    "min_duration_s": 0.5,
+    "max_duration_s": 2.8,
+    "speed_retention_base": 0.2,
+    "flatness_retention": 0.25,
+    "deceleration_range_m_s2": [
+      1.5,
+      2.4
+    ],
+    "distance_cv": 0.25,
+    "direction_sd_degrees": 16.0,
+    "max_deviation_degrees": 45.0
+  },
+  "panel_rebound": {
+    "enabled": true,
+    "retention_range": [
+      0.3,
+      0.45
+    ],
+    "min_distance_m": 0.25,
+    "max_distance_m": 3.8
+  }
+}

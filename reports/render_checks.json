@@ -1,0 +1,12 @@
+{
+  "cases": 5,
+  "team_facing_verified": true,
+  "bow_direction_verified": true,
+  "interpolation_verified": true,
+  "queue_cache_verified": true,
+  "toggles_verified": true,
+  "attention_overlay_verified": true,
+  "selected_profiles_verified": true,
+  "duck_silhouette_verified": true,
+  "canvas_mean_draw_ms": 17.62768681111111
+}

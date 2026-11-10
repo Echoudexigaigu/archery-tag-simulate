@@ -31,6 +31,17 @@ def replay_payload(config, env, stride=1, speed=2.0):
                     "duration": frames[-1]["t"], "roundDuration": config["time"]["round_s"],
                     "winner": env.winner, "seed": env.seed, "mode": env.mode,
                     "field": config["field"], "teams": config["teams"],
+                    "physics": config["physics"], "rules": config["rules"],
+                    "coverBased": config["policy"].get("cover_based", False),
+                    "evasion": config.get("evasion", {}),
+                    "sixRoles": config['policy'].get('six_roles', False),
+                    "variedV5": config['policy'].get('varied_v5', False),
+                    "groundRunout": config.get('ground_runout',{}).get('enabled',False),
+                    "reboundV7": config.get('panel_rebound',{}).get('enabled',False),
+                    "victoryReason": getattr(env, 'victory_reason', None),
+                    "skirmishRacks": [{"team": team, "position": r.position, "size": r.size,
+                                        "offsets": r.offsets, "radius": r.radius}
+                                       for team, r in getattr(env, "skirmish_racks", {}).items()],
                     "playerRadius": config["physics"]["player_radius_m"],
                     "obstacles": [{"id": o.id, "center": o.center, "size": o.size} for o in env.obstacles],
                     "rack": {"position": env.rack.position, "size": env.rack.size,
@@ -47,5 +58,6 @@ def replay_html(config, env, stride=1, speed=2.0):
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
     # Prevent any strings in the data from closing the script element.
     data = data.replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
-    template = Path(__file__).with_name("replay_template.html").read_text(encoding="utf-8")
+    template_name = 'six_role_replay_template.html' if config['policy'].get('six_roles') else 'replay_template.html'
+    template = Path(__file__).with_name(template_name).read_text(encoding="utf-8")
     return template.replace("__REPLAY_ROOT__", "archery-replay-" + uuid.uuid4().hex).replace("__REPLAY_DATA__", data)

@@ -1,0 +1,13 @@
+﻿source,seed,agent,player_id,is_demo,home_role,active_s,distance_m,crouched_s,cover_geometry_s,cover_fraction,no_arrow_s,body_shots,body_shots_resolved,body_shots_unresolved,intended_body_hits,intended_body_hit_rate,scoreboard_shots,scoreboard_shots_resolved,scoreboard_knockdowns,scoreboard_knockdown_rate,pickups,passes,evasion_actions
+simulation,1001,attack_0,P01,True,high_flank,73.475,54.089,0.95,0.15,0.002,11.325,4,4,0,1,0.25,0,0,0,,8,0,3
+simulation,1001,attack_1,P02,True,high_cover,240.0,230.782,0.05,101.025,0.4209,1.95,0,0,0,0,,0,0,0,,3,0,1
+simulation,1001,attack_2,P03,True,center_1,128.8,172.048,4.875,0.0,0.0,11.825,2,2,0,0,0.0,0,0,0,,29,4,3
+simulation,1001,attack_3,P04,True,center_2,84.425,108.157,3.5,0.0,0.0,6.825,0,0,0,0,,0,0,0,,18,6,3
+simulation,1001,attack_4,P05,True,low_cover,240.0,256.065,105.0,84.0,0.35,61.7,0,0,0,0,,0,0,0,,15,0,4
+simulation,1001,attack_5,P06,True,revive_lane,205.0,278.341,6.5,0.95,0.0046,41.35,12,12,0,0,0.0,0,0,0,,35,7,6
+simulation,1001,defense_0,P07,True,high_flank,240.0,73.585,2.5,2.1,0.0088,164.0,10,10,0,0,0.0,0,0,0,,15,0,1
+simulation,1001,defense_1,P08,True,high_cover,240.0,213.879,0.5,74.625,0.3109,6.225,3,3,0,1,0.3333,0,0,0,,6,0,2
+simulation,1001,defense_2,P09,True,center_1,240.0,149.519,3.3,0.0,0.0,98.175,5,5,0,1,0.2,0,0,0,,18,6,3
+simulation,1001,defense_3,P10,True,center_2,240.0,189.925,4.15,0.175,0.0007,103.325,8,8,0,2,0.25,0,0,0,,21,5,8
+simulation,1001,defense_4,P11,True,low_cover,240.0,143.944,150.4,139.0,0.5792,81.35,0,0,0,0,,3,3,1,0.3333,5,0,0
+simulation,1001,defense_5,P12,True,revive_lane,227.625,164.353,3.2,0.85,0.0037,129.925,9,9,0,2,0.2222,0,0,0,,17,4,4

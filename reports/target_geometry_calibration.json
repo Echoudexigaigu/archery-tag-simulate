@@ -1,0 +1,112 @@
+{
+  "rows": [
+    {
+      "target_skill": 0.65,
+      "release": "quick_after_movement",
+      "distance_m": 6,
+      "trials": 800,
+      "geometric_hits_with_5_2_1_live_points": [
+        349,
+        247,
+        212
+      ],
+      "geometric_rates": [
+        0.4363,
+        0.3088,
+        0.265
+      ],
+      "angular_sigma_rad": 0.0169
+    },
+    {
+      "target_skill": 0.65,
+      "release": "steady_aim",
+      "distance_m": 6,
+      "trials": 800,
+      "geometric_hits_with_5_2_1_live_points": [
+        552,
+        540,
+        535
+      ],
+      "geometric_rates": [
+        0.69,
+        0.675,
+        0.6687
+      ],
+      "angular_sigma_rad": 0.00877076802362844
+    },
+    {
+      "target_skill": 0.75,
+      "release": "quick_after_movement",
+      "distance_m": 6,
+      "trials": 800,
+      "geometric_hits_with_5_2_1_live_points": [
+        375,
+        302,
+        269
+      ],
+      "geometric_rates": [
+        0.4688,
+        0.3775,
+        0.3362
+      ],
+      "angular_sigma_rad": 0.014624999999999999
+    },
+    {
+      "target_skill": 0.75,
+      "release": "steady_aim",
+      "distance_m": 6,
+      "trials": 800,
+      "geometric_hits_with_5_2_1_live_points": [
+        610,
+        607,
+        606
+      ],
+      "geometric_rates": [
+        0.7625,
+        0.7588,
+        0.7575
+      ],
+      "angular_sigma_rad": 0.0075900877127553805
+    },
+    {
+      "target_skill": 0.95,
+      "release": "quick_after_movement",
+      "distance_m": 6,
+      "trials": 800,
+      "geometric_hits_with_5_2_1_live_points": [
+        477,
+        452,
+        445
+      ],
+      "geometric_rates": [
+        0.5962,
+        0.565,
+        0.5563
+      ],
+      "angular_sigma_rad": 0.010075
+    },
+    {
+      "target_skill": 0.95,
+      "release": "steady_aim",
+      "distance_m": 6,
+      "trials": 800,
+      "geometric_hits_with_5_2_1_live_points": [
+        753,
+        753,
+        753
+      ],
+      "geometric_rates": [
+        0.9413,
+        0.9413,
+        0.9413
+      ],
+      "angular_sigma_rad": 0.005228727091009263
+    }
+  ],
+  "notes": [
+    "Same 800 trajectories reused for each remaining-disk mask within a row; all aimed at the center.",
+    "An incidental adjacent live disk is a success. Removed disks are not successes.",
+    "These are geometric contacts before the separate knockdown check, not measured player probabilities.",
+    "No coefficient depends on the number of remaining disks. Changing aim point also changes real geometry."
+  ]
+}

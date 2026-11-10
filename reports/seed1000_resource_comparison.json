@@ -1,0 +1,24 @@
+{
+  "seed": 1000,
+  "v61": {
+    "whole_game_s": [
+      54.3,
+      55.6
+    ],
+    "after120_s": [
+      54.3,
+      55.6
+    ]
+  },
+  "v62": {
+    "whole_game_s": [
+      2.2,
+      1.55
+    ],
+    "after120_s": [
+      0.0,
+      0.0
+    ]
+  },
+  "definition": "At least two active upper-half players unarmed, >=4 ground arrows in own rear 6m and >=3 active teammates. This measures whole-field supply starvation, not just nearby-arrow idle."
+}

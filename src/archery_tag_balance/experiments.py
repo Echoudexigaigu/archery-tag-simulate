@@ -9,6 +9,16 @@ import statistics
 from .environment import Environment
 from .policies import Navigator, ScriptedPolicy
 from .skirmish import SkirmishEnvironment, SkirmishPolicy
+from .cover_policy import CoverPolicy
+from .human_skirmish import HumanSkirmishEnvironment
+from .six_role_policy import SixRolePolicy
+from .varied_environment import VariedSkirmishEnvironment
+from .varied_policy import VariedRolePolicy
+from .runout_environment import RunoutSkirmishEnvironment
+from .rebound_environment import ReboundSkirmishEnvironment
+from .cache_policy import CacheRolePolicy
+from .tactical_environment import SuzhouEnvironment
+from .tactical_policy import SuzhouPolicy
 
 
 def wilson(wins, n, z=1.959963984540054):
@@ -35,22 +45,38 @@ class SimulationEngine:
 
     def episode(self, seed=0, record=False, check_invariants=False, record_interval_s=0.1):
         skirmish = self.config.get("mode") == "skirmish"
-        env = SkirmishEnvironment(self.config) if skirmish else Environment(self.config)
-        policy_class = SkirmishPolicy if skirmish else ScriptedPolicy
-        mirror = bool(seed % 2)
+        suzhou=self.config.get('ruleset_id')=='suzhou_2026_next_battle'
+        if suzhou:
+            env,policy_class=SuzhouEnvironment(self.config),SuzhouPolicy
+        else:
+            env = SkirmishEnvironment(self.config) if skirmish else Environment(self.config)
+            policy_class = (CoverPolicy if self.config["policy"].get("cover_based") else SkirmishPolicy) if skirmish else ScriptedPolicy
+            if skirmish and self.config["policy"].get("six_roles"):
+                env, policy_class = HumanSkirmishEnvironment(self.config), SixRolePolicy
+            if skirmish and self.config['policy'].get('varied_v5'):
+                env,policy_class=VariedSkirmishEnvironment(self.config),VariedRolePolicy
+            if skirmish and self.config.get('ground_runout',{}).get('enabled'):
+                env,policy_class=RunoutSkirmishEnvironment(self.config),VariedRolePolicy
+            if skirmish and self.config.get('panel_rebound',{}).get('enabled'):
+                env,policy_class=ReboundSkirmishEnvironment(self.config),CacheRolePolicy
+        mirror = bool(seed % 2) and self.config["policy"].get("mirror_layout", True)
         env.reset(seed=seed, record=record, mirror_y=mirror, record_interval_s=record_interval_s)
-        navigator = Navigator(self.config, env.obstacles)
-        policies = {aid: policy_class(self.config, navigator, aid, seed * 101 + i + 17, mirror) for i, aid in enumerate(env.agents)}
+        navigator = Navigator(self.config, getattr(env, "navigation_obstacles", env.obstacles))
+        profile_seed=self.config.get('roster_seed',20261107) if suzhou else seed
+        policies = {aid: policy_class(self.config, navigator, aid, profile_seed * 101 + i + 17, mirror) for i, aid in enumerate(env.agents)}
         next_decision, actions = -1.0, {}
         while not env.done:
             if env.t + 1e-9 >= next_decision:
                 actions = {aid: policies[aid](env.get_observation(aid)) for aid in env.agents}
+                if suzhou:env.policy_intents={aid:dict(p.intent) for aid,p in policies.items()}
                 next_decision = env.t + self.config["policy"]["decision_interval_s"]
             env.step(actions, observe=False)
             if check_invariants:
                 env.assert_invariants()
         env.assert_invariants()
         row = env.summary()
+        if self.config["policy"].get("six_roles"):
+            row['policy_diagnostics'] = {aid: dict(p.diagnostics) for aid, p in policies.items()}
         row["mirror_y"] = mirror
         return row, env
 

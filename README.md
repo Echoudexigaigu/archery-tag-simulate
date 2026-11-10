@@ -1,82 +1,49 @@
-# Archery Tag Balance Lab
+# 苏州 V6.2：批量回收、分发和靶区攻防
 
-Evaluate asymmetric Archery Tag rules and five-spot target-rack placement through reproducible multi-agent simulation.
+解压后打开 OPEN_SUZHOU.html。无需安装、联网或启动服务器。页面包含三场普通比赛，以及两段明确标注的测试：红1对蓝6；上路空弓、下侧后场堆箭（前40秒，不结算胜负）。纽约 v7 在 references 中独立保留。
 
-**Status: first runnable, uncalibrated attack/defense simulator with scripted players. No trained RL policy or real-world balance estimate.**
+## 这次修复的原因
 
-## Research questions
+V6.1把单人的取箭通道限制过严，中路和高边看不到合法候选任务，尽管本方另一个区域有大量已发现的箭。搬运又与射击携箭偏好混用，拿到一支后就结束收集。旧检查只找身后三米内有没有箭，漏掉了整个后场的供需失衡。
 
-- Which target-rack positions produce approximately equal attack and defense win probabilities?
-- How do veteran count and individual archery proficiency change those probabilities?
-- Which simple resource, life, or respawn adjustments compensate for unequal rosters?
+V6.2把搬运任务和射击携箭偏好分开。中路优先承担本方后场回收，缺少中路时由其他非掩体位接手。搬运者可收集到总计四支，再沿固定落点分发给不同队友；保留本人至少一支。一个人通常只带一支射击，不妨碍他先搬四支、把三支松箭传出。空弓最多握三支；收第四支前先搭一支，符合弓上一支、手上最多三支的上限。批量分发时允许保留弓上的箭，只扔手里的松箭；投出的箭始终不能造成命中。
 
-The working scenario uses 120-second attack/defense rounds, a user-supplied 23 x 12 m field, and **one rack holding five fixed target spots**. Rack position is a design variable; individual spots do not move independently.
+每队同时只有一名专职搬运者，其他人仍可自取。空手接收者优先于已经持箭者，同一批不会反复喂给同一人。掩体附近备用箭不会被搬运者搬走重存。接收者已有一支时，送到安全位置的箭可作为地上备用箭，避免强迫不会多箭射击的人带着额外箭出手。没有真实接收需求时不会为了凑携箭数反复搬运自己的缓存。
 
-## Play the 6v6 elimination mode
+补给位置使用当前战术站位。人数优势前压后，箭送到前线附近，不再送回过时的后方岗位。掩体位有支援者时只在保护投影内接近取箭，不为了捡后场箭离开掩体；无支援者的残局才允许自行回收。所有箭仍需实际移动、投掷、落地与拾取，没有远程转移库存。
 
-[Open 6v6 mutual combat in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/03_skirmish_6v6.ipynb)
+## 移动与卡住
 
-Each player has two lives and an opening allocation of three arrows on x=11.5 m (36 arrows total). Both teams start empty at opposite baselines, collect their arrows, and return to their own baseline before shooting is unlocked. The rule is enforced by the environment. The four assumed bunker centers are (5.75,3), (5.75,9), (17.25,3), (17.25,9). Other physics, skill and respawn parameters are inherited. Each side stays in its own half; this mode has no target rack.
+普通移动上限为3米/秒，加入7米/秒平方的加减速。专业捡箭、搭箭的时间仍然很短；拾取后有0.12秒起身过渡，避免一拿到箭就瞬间反向冲刺。开局冲箭和反应闪避保留较高爆发速度。
 
-A hit consumes one life, drops carried arrows and starts the same 3-second empty respawn, with 0.8-second protection. A second hit eliminates the player permanently. An already completed opening route remains completed after respawn. Full team elimination wins; timeout at 120 seconds or mutual elimination in the same tick draws. These victory/tie conventions and opening allocations are explicit model assumptions. Draws are counted separately in batch statistics. See [mode details](docs/skirmish.md).
+碰撞体保留。人物让路改为确定的顺序和持续侧向通道，避免两人每帧改变方向相互卡住。物理人物半径0.25米、导航安全半径0.27米；一次合法闪避可能落入这2厘米余量，旧逻辑会认为任何路径都不可达。本版会先沿物理合法方向退出余量，再恢复导航。人物不会穿过掩体或队友脱困。
 
-## Watch a match in Colab
+## 靶点与复活耗尽
 
-[Open the animation notebook](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/02_animation.ipynb)
+人物命中精度沿用V6.1，打小靶点使用独立、较宽的散布；选手打靶能力高、稳定瞄准时仍可很准，仓促踩点和刚移动后的射击较难。没有按剩余孔数直接乘一个命中率。箭实际撞到任何仍在的靶点都可以击落，即使本来瞄的是旁边；撞到已被清掉的孔不会再得分。同一组出手，在五点齐全时可因邻孔补中而成功，剩一两点时这些补中机会消失。
 
-Use a CPU runtime, run the cells, then click Play. The self-contained Canvas replay shows movement, flying and ground arrows, eliminations, respawns, protection, ammo, proficiency and five target spots on one rack. Pause, step, seek and change playback speed; export `replay.html` for offline playback. No GPU, display server, video encoder or additional plotting dependency is needed. Restart an existing runtime before loading updated simulator modules.
+reports/target_geometry_calibration.json 用同一批800条轨迹分别对五点、两点和一点做几何统计。它是演示参数的校准，不是真实选手概率；几何接触后仍有原本的击落判定。没有改小实体靶板或虚构必须拖到几分钟才允许清空的计时限制。
 
-Replay snapshots default to one per physics tick (0.1 seconds); resource metrics remain sampled at one second. Recording does not consume random numbers or alter simulation decisions. Change `record_interval_s` or `stride` to reduce export size; coarser recordings can miss short arrow flights. This is a replay of scripted, uncalibrated players.
+共用复活靶耗尽后，页面提示“靶区攻防”，原复活路显示为“靶区支援”，站位移向得分靶附近，不再前往复活踩点。补给也使用新的支援站位。保留原岗位标识用于记录，但任务发生改变。
 
-## Run the first simulation
+## 看回放和检查
 
-[Open attack/defense simulation in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/01_attack_defense.ipynb)
+建议先选“补给测试 · 上路空弓 / 后场有箭”，看搬运数量和高掩体何时重新持箭；再查看普通种子1000两分钟后的人员、携箭与任务。拾取、运箭、分发、等待落点与布置备用箭有不同标签。1×为模拟时间，0.5×可看闪避和起身。
 
-Choose a CPU runtime and run the cells in order. The notebook shows the assumed map, runs one episode, displays target states and resource curves, and compares veteran counts. Review the provisional 1 x 0.6 x 1 m bunker interpretation and all other unmeasured parameters before using results.
+reports/v62_checks.json 检查箭支守恒、整片后场有库存时上路断供时长、批量加载与分发、掩体远行、复活靶状态和分阶段打靶结果。source_hashes.json对应最终源文件，unit_tests.txt与render_checks.json记录单元测试和离屏回放检查。离屏绘制速度不代表所有设备的实际浏览器帧率。
 
-- Configuration: `configs/attack_defense_23x12.json`
-- Initial report: `reports/first_simulation/README.md`
-- Core: Python standard library; Matplotlib is only needed for plots.
-- Tests: `PYTHONPATH=src python -m unittest discover -s tests -v`
-- Full batch: `PYTHONPATH=src python scripts/run_initial_experiments.py`
+本版仍为规则驱动的多智能体原型，参数未用真实选手或录像拟合。人数压力、风险与补给分工是可解释的规则，未训练真人心理或学习最优战术。场外箭回补、友箭处理与即时掉靶仍沿用既有简化。没有可合法回收的本方箭、或被压制到无法行动时，选手仍可能观察等待；本版不通过强制乱跑来掩盖缺箭。
 
-## Start in Colab
+## 选手数据与重新生成
 
-Repository: https://github.com/Echoudexigaigu/archery-tag-simulate
+18人空白采集表 data/player_collection.xlsx 原样保留。能力、风格、来源与缺失信息仍分开记录；评分不是命中概率。模拟记录不冒充录像资料，人工测试场景在特征表的 scenario 列单独标注。
 
-[Open setup in Colab](https://colab.research.google.com/github/Echoudexigaigu/archery-tag-simulate/blob/main/notebooks/00_setup.ipynb)
+```
+python scripts/build_suzhou.py --endgame-demo --supply-demo
+python -m unittest discover -s tests -v
+python scripts/check_v62.py
+python scripts/calibrate_targets.py
+python scripts/prepare_feature_matrix.py
+```
 
-The setup notebook uses the public repository URL below and requires no GitHub token for cloning.
-
-1. Click **Open setup in Colab** above.
-2. Connect to a standard CPU runtime (hardware accelerator: None).
-3. Run the code cells in order; `REPO_URL` is already configured.
-4. Review the baseline configuration, unresolved measurements, and Git commit. Setup does not run a simulation.
-
-The clone cell supports public repositories without credentials. For a private repository, follow `docs/colab_workflow.md`; never put credentials in tracked files or notebook outputs.
-
-## Project layout
-
-| Path | Purpose |
-| --- | --- |
-| `configs/baseline.json` | Original unresolved design template |
-| `configs/attack_defense_23x12.json` | Runnable provisional field, rules, skills and policies |
-| `docs/model.md` | Mathematical model and balance objective |
-| `docs/decisions.md` | Confirmed decisions, provisional assumptions, and open questions |
-| `docs/colab_workflow.md` | Colab/Git/Drive workflow |
-| `notebooks/00_setup.ipynb` | Clone, inspect configuration, and record repository version |
-| `notebooks/02_animation.ipynb` | Run one episode and play/export an interactive replay |
-| `notebooks/03_skirmish_6v6.ipynb` | Symmetric two-life elimination mode with replay and separate draw statistics |
-| `src/archery_tag_balance/` | Entities, geometry, environment, policies and evaluation |
-| `tests/` | Physics, conservation, observation and rule checks |
-| `reports/` | Selected small, reviewed results |
-
-## Reproducibility
-
-Each future run must retain the Git commit, dirty-worktree status and any uncommitted patch, exact configuration snapshot, seeds, policy/checkpoint identifiers, installed package versions, and output artifact locations. A random seed alone does not reproduce a changed environment.
-
-Code, configuration, and selected reports belong in Git. Large trajectories, model checkpoints, and videos belong in Drive. Colab runtime files are temporary; a local commit is not a remote backup until pushed.
-
-## Next milestone
-
-Confirm bunker dimensions, five-hole geometry and assumed boundaries; calibrate arrow dispersion and timings. Compare policy families and refine the model before training or claiming real-world balance.
+填好表后，可按 data/START_HERE.md 导入，再重新生成。Excel导入需要openpyxl；CSV、模拟与回放生成仅使用Python标准库。

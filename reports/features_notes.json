@@ -1,0 +1,12 @@
+{
+  "source": "simulation_only",
+  "fitted_model": false,
+  "rows": 60,
+  "notes": [
+    "Keep scenario, role, opponents, active time and trial counts as context. Do not pool an artificial initial state with normal matches without accounting for it.",
+    "The initial_role column does not control subsequent position changes. Split decisions.csv by actual role intervals before estimating style.",
+    "Missing rates are missing, never zero.",
+    "Do not mix synthetic simulation rows with real video observations.",
+    "No matrix factorization has been fit; candidate features do not automatically identify skill and style."
+  ]
+}

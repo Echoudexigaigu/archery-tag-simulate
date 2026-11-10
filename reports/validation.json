@@ -1,0 +1,461 @@
+{
+  "episodes": 5,
+  "rows": [
+    {
+      "seed": 1000,
+      "winner": "defense",
+      "duration_s": 240.0,
+      "clear_time_s": null,
+      "remaining_spots": null,
+      "shots": 79,
+      "hits": 9,
+      "pickups": 195,
+      "respawns": 5,
+      "cover_utilization": 0.9158249158249159,
+      "eta": {
+        "attack_0": 0.75,
+        "attack_1": 0.75,
+        "attack_2": 0.75,
+        "attack_3": 0.75,
+        "attack_4": 0.75,
+        "attack_5": 0.75,
+        "defense_0": 0.75,
+        "defense_1": 0.75,
+        "defense_2": 0.75,
+        "defense_3": 0.75,
+        "defense_4": 0.75,
+        "defense_5": 0.75
+      },
+      "ruleset": "suzhou_2026_next_battle",
+      "victory_reason": "remaining_score",
+      "remaining_score": {
+        "attack": {
+          "alive": 2,
+          "target": 4,
+          "total": 6
+        },
+        "defense": {
+          "alive": 6,
+          "target": 5,
+          "total": 11
+        }
+      },
+      "target_status": {
+        "attack": [
+          false,
+          true,
+          false,
+          true,
+          true
+        ],
+        "defense": [
+          false,
+          true,
+          true,
+          true,
+          true
+        ],
+        "revive": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "revive_grants": 5,
+      "panel_rebounds": 5,
+      "invalid_revive_shots": {},
+      "geometry_verified": true,
+      "stashed_arrows": 24,
+      "movement_evades": 54,
+      "v3_stats": {
+        "arrow_pass": 29,
+        "death_discard": 9,
+        "role_change": 12,
+        "bow_ready": 91,
+        "local_yields": 20,
+        "stalled_replans": 0,
+        "arrow_edge_releases": 8
+      },
+      "v4_supply": {
+        "supply_contract": 0,
+        "supply_complete": 26,
+        "supply_cancel": 5,
+        "cancel_reasons": {
+          "distributed": 34
+        }
+      },
+      "observed_speed_fps": {
+        "mean": 122.3297039207417,
+        "min": 118.16660183742658,
+        "max": 126.35939761301928
+      }
+    },
+    {
+      "seed": 1001,
+      "winner": "defense",
+      "duration_s": 240.0,
+      "clear_time_s": null,
+      "remaining_spots": null,
+      "shots": 74,
+      "hits": 7,
+      "pickups": 190,
+      "respawns": 4,
+      "cover_utilization": 0.9291075896580484,
+      "eta": {
+        "attack_0": 0.75,
+        "attack_1": 0.75,
+        "attack_2": 0.75,
+        "attack_3": 0.75,
+        "attack_4": 0.75,
+        "attack_5": 0.75,
+        "defense_0": 0.75,
+        "defense_1": 0.75,
+        "defense_2": 0.75,
+        "defense_3": 0.75,
+        "defense_4": 0.75,
+        "defense_5": 0.75
+      },
+      "ruleset": "suzhou_2026_next_battle",
+      "victory_reason": "remaining_score",
+      "remaining_score": {
+        "attack": {
+          "alive": 3,
+          "target": 5,
+          "total": 8
+        },
+        "defense": {
+          "alive": 6,
+          "target": 6,
+          "total": 12
+        }
+      },
+      "target_status": {
+        "attack": [
+          false,
+          true,
+          true,
+          true,
+          true
+        ],
+        "defense": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "revive": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "revive_grants": 5,
+      "panel_rebounds": 16,
+      "invalid_revive_shots": {},
+      "geometry_verified": true,
+      "stashed_arrows": 24,
+      "movement_evades": 38,
+      "v3_stats": {
+        "arrow_pass": 32,
+        "death_discard": 7,
+        "role_change": 8,
+        "bow_ready": 85,
+        "local_yields": 10,
+        "stalled_replans": 0,
+        "arrow_edge_releases": 6
+      },
+      "v4_supply": {
+        "supply_contract": 0,
+        "supply_complete": 29,
+        "supply_cancel": 3,
+        "cancel_reasons": {
+          "distributed": 32
+        }
+      },
+      "observed_speed_fps": {
+        "mean": 122.38430169079615,
+        "min": 117.50628070876557,
+        "max": 125.86101478434604
+      }
+    },
+    {
+      "seed": 1002,
+      "winner": "draw",
+      "duration_s": 240.0,
+      "clear_time_s": null,
+      "remaining_spots": null,
+      "shots": 80,
+      "hits": 7,
+      "pickups": 192,
+      "respawns": 5,
+      "cover_utilization": 0.9084786053882726,
+      "eta": {
+        "attack_0": 0.75,
+        "attack_1": 0.75,
+        "attack_2": 0.75,
+        "attack_3": 0.75,
+        "attack_4": 0.75,
+        "attack_5": 0.75,
+        "defense_0": 0.75,
+        "defense_1": 0.75,
+        "defense_2": 0.75,
+        "defense_3": 0.75,
+        "defense_4": 0.75,
+        "defense_5": 0.75
+      },
+      "ruleset": "suzhou_2026_next_battle",
+      "victory_reason": "remaining_score",
+      "remaining_score": {
+        "attack": {
+          "alive": 5,
+          "target": 6,
+          "total": 11
+        },
+        "defense": {
+          "alive": 5,
+          "target": 6,
+          "total": 11
+        }
+      },
+      "target_status": {
+        "attack": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "defense": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "revive": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "revive_grants": 5,
+      "panel_rebounds": 15,
+      "invalid_revive_shots": {},
+      "geometry_verified": true,
+      "stashed_arrows": 24,
+      "movement_evades": 42,
+      "v3_stats": {
+        "arrow_pass": 44,
+        "death_discard": 6,
+        "role_change": 10,
+        "bow_ready": 94,
+        "local_yields": 33,
+        "stalled_replans": 2,
+        "arrow_edge_releases": 5
+      },
+      "v4_supply": {
+        "supply_contract": 0,
+        "supply_complete": 39,
+        "supply_cancel": 6,
+        "cancel_reasons": {
+          "distributed": 32,
+          "carrier_out": 1
+        }
+      },
+      "observed_speed_fps": {
+        "mean": 122.5276707226136,
+        "min": 117.95139363753039,
+        "max": 125.6826713881854
+      }
+    },
+    {
+      "seed": 6106,
+      "winner": "defense",
+      "duration_s": 44.1,
+      "clear_time_s": null,
+      "remaining_spots": null,
+      "shots": 22,
+      "hits": 0,
+      "pickups": 30,
+      "respawns": 0,
+      "cover_utilization": 0.27696793002915426,
+      "eta": {
+        "attack_0": 0.75,
+        "attack_1": 0.75,
+        "attack_2": 0.75,
+        "attack_3": 0.75,
+        "attack_4": 0.75,
+        "attack_5": 0.75,
+        "defense_0": 0.75,
+        "defense_1": 0.75,
+        "defense_2": 0.75,
+        "defense_3": 0.75,
+        "defense_4": 0.75,
+        "defense_5": 0.75
+      },
+      "ruleset": "suzhou_2026_next_battle",
+      "victory_reason": "target_clear",
+      "remaining_score": {
+        "attack": {
+          "alive": 1,
+          "target": 0,
+          "total": 1
+        },
+        "defense": {
+          "alive": 6,
+          "target": 6,
+          "total": 12
+        }
+      },
+      "target_status": {
+        "attack": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "defense": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "revive": [
+          false,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      "revive_grants": 1,
+      "panel_rebounds": 13,
+      "invalid_revive_shots": {},
+      "geometry_verified": true,
+      "stashed_arrows": 0,
+      "movement_evades": 1,
+      "v3_stats": {
+        "arrow_pass": 6,
+        "death_discard": 0,
+        "role_change": 0,
+        "bow_ready": 18,
+        "local_yields": 0,
+        "stalled_replans": 0,
+        "arrow_edge_releases": 6
+      },
+      "v4_supply": {
+        "supply_contract": 0,
+        "supply_complete": 5,
+        "supply_cancel": 0,
+        "cancel_reasons": {
+          "distributed": 3
+        }
+      },
+      "observed_speed_fps": {
+        "mean": 122.17101144518293,
+        "min": 117.6128278474758,
+        "max": 124.93696584171487
+      }
+    },
+    {
+      "seed": 6200,
+      "winner": "ongoing",
+      "duration_s": 40.0,
+      "clear_time_s": null,
+      "remaining_spots": null,
+      "shots": 6,
+      "hits": 0,
+      "pickups": 34,
+      "respawns": 0,
+      "cover_utilization": 0.9729166666666667,
+      "eta": {
+        "attack_0": 0.75,
+        "attack_1": 0.75,
+        "attack_2": 0.75,
+        "attack_3": 0.75,
+        "attack_4": 0.75,
+        "attack_5": 0.75,
+        "defense_0": 0.75,
+        "defense_1": 0.75,
+        "defense_2": 0.75,
+        "defense_3": 0.75,
+        "defense_4": 0.75,
+        "defense_5": 0.75
+      },
+      "ruleset": "suzhou_2026_next_battle",
+      "victory_reason": "demonstration_window",
+      "remaining_score": {
+        "attack": {
+          "alive": 6,
+          "target": 6,
+          "total": 12
+        },
+        "defense": {
+          "alive": 6,
+          "target": 6,
+          "total": 12
+        }
+      },
+      "target_status": {
+        "attack": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "defense": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "revive": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "revive_grants": 0,
+      "panel_rebounds": 0,
+      "invalid_revive_shots": {},
+      "geometry_verified": true,
+      "stashed_arrows": 0,
+      "movement_evades": 7,
+      "v3_stats": {
+        "arrow_pass": 15,
+        "death_discard": 0,
+        "role_change": 0,
+        "bow_ready": 17,
+        "local_yields": 0,
+        "stalled_replans": 0,
+        "arrow_edge_releases": 0
+      },
+      "v4_supply": {
+        "supply_contract": 0,
+        "supply_complete": 12,
+        "supply_cancel": 3,
+        "cancel_reasons": {
+          "distributed": 5
+        }
+      },
+      "observed_speed_fps": {
+        "mean": 123.62718708369877,
+        "min": 121.81675690080701,
+        "max": 125.2690546121098
+      }
+    }
+  ]
+}

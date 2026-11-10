@@ -17,6 +17,8 @@ class Action:
     aim_key: str | None = None
     interaction: str = "none"  # none / pickup / shoot / catch
     crouch: bool = False
+    evasion_kind: str | None = None
+    evade_key: tuple | None = None
 
 
 @dataclass
@@ -43,6 +45,20 @@ class Agent:
     crouched: bool = False
     center_visited: bool = False
     shoot_unlocked: bool = True
+    dodge_ready_at: float = 0.0
+    stamina: float = 1.0
+    movement_dodge_ready_at: float = 0.0
+    evasion_until: float = 0.0
+    evasion_kind: str | None = None
+    evade_key: tuple | None = None
+    human_profile: dict = field(default_factory=dict)
+    human_aim_s: float = 1.0
+    pickup_required_s: float = 0.65
+    last_move_at: float = -100.0
+    last_shot_at: float = -100.0
+    role: str = ""
+    steady_aim_s: float = 0.0
+    steady_aim_key: str | None = None
 
 
 @dataclass
@@ -56,6 +72,17 @@ class Arrow:
     flight_left: float = 0.0
     opening_arrow: bool = False
     opening_owner: str | None = None
+    released_at: float = 0.0
+    evaded_agents: set = field(default_factory=set)
+    planned_flight_s: float = 0.0
+    landing_origin: tuple | None = None
+    settling_elapsed: float = 0.0
+    settling_duration: float = 0.0
+    settling_heading: tuple = (0.0, 0.0)
+    settling_distance: float = 0.0
+    settling_curve: float = 0.0
+    settling_hops: int = 0
+    settling_height: float = 0.0
 
 
 @dataclass(frozen=True)

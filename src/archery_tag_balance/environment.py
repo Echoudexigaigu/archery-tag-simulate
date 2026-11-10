@@ -13,7 +13,7 @@ from math import atan2, cos, hypot, isfinite, sin, sqrt
 import random
 
 from .entities import Action, Agent, Arrow, Obstacle, Status, TargetRack
-from .geometry import ballistic_velocity, lerp, segment_box, segment_cylinder
+from .geometry import advance_arrow, ballistic_velocity, lerp, segment_box, segment_cylinder
 
 
 class Environment:
@@ -196,6 +196,33 @@ class Environment:
     def _skill(self, eta, novice, expert):
         return expert + (novice - expert) * (1 - eta)
 
+    def _aim_duration(self, a):
+        s = self.config["skill"]
+        return self._skill(a.eta, s["novice_aim_s"], s["expert_aim_s"])
+
+    def _pickup_duration(self, a):
+        return self.config["physics"]["pickup_s"]
+
+    def _pickup_progress_allowed(self, a):
+        return True
+
+    def _on_aim_progress(self, a, action, dt):
+        pass
+
+    def _launch_velocity(self, a, origin, target):
+        p, skill = self.config["physics"], self.config["skill"]
+        v = ballistic_velocity(origin, target, p["arrow_speed_m_s"], p["gravity_m_s2"],
+                               p.get("linear_drag_s_inv", 0.0), p["arrow_max_flight_s"])
+        if v is None:
+            return None
+        sigma = self._skill(a.eta, skill["novice_angle_sd_rad"], skill["expert_angle_sd_rad"])
+        speed_fraction = hypot(*a.velocity) / p["move_speed_m_s"]
+        sigma *= sqrt(1 + skill["movement_variance_multiplier"] * speed_fraction * speed_fraction)
+        yaw = atan2(v[1], v[0]) + self.rng.gauss(0, sigma)
+        pitch = atan2(v[2], hypot(v[0], v[1])) + self.rng.gauss(0, sigma)
+        speed = p["arrow_speed_m_s"]
+        return (speed * cos(pitch) * cos(yaw), speed * cos(pitch) * sin(yaw), speed * sin(pitch))
+
     def _release(self, a, action):
         c, p, skill = self.config, self.config["physics"], self.config["skill"]
         if a.status != Status.ACTIVE or not a.shoot_unlocked or not a.has_bow or not a.inventory or a.reload_left > 1e-9 or action.aim is None:
@@ -205,23 +232,19 @@ class Environment:
             return
         if hypot(action.aim[0] - a.position[0], action.aim[1] - a.position[1]) < c["rules"]["min_shot_distance_m"]:
             return
-        aim_time = self._skill(a.eta, skill["novice_aim_s"], skill["expert_aim_s"])
+        aim_time = self._aim_duration(a)
         if a.aim_elapsed + 1e-9 < aim_time:
             return
         origin = (*a.position, self.release_height(a))
-        v = ballistic_velocity(origin, action.aim, p["arrow_speed_m_s"], p["gravity_m_s2"])
+        v = self._launch_velocity(a, origin, action.aim)
         if v is None:
             return
-        sigma = self._skill(a.eta, skill["novice_angle_sd_rad"], skill["expert_angle_sd_rad"])
-        speed_fraction = hypot(*a.velocity) / p["move_speed_m_s"]
-        sigma *= sqrt(1 + skill["movement_variance_multiplier"] * speed_fraction * speed_fraction)
-        yaw = atan2(v[1], v[0]) + self.rng.gauss(0, sigma)
-        pitch = atan2(v[2], hypot(v[0], v[1])) + self.rng.gauss(0, sigma)
-        speed = p["arrow_speed_m_s"]
         b = self.arrows[a.inventory.pop(0)]
         b.state, b.carrier, b.shooter = "flying", None, a.id
         b.position, b.flight_left = origin, p["arrow_max_flight_s"]
-        b.velocity = (speed * cos(pitch) * cos(yaw), speed * cos(pitch) * sin(yaw), speed * sin(pitch))
+        b.released_at = self.t
+        b.evaded_agents.clear()
+        b.velocity = v
         a.reload_left = self._skill(a.eta, skill["novice_reload_s"], skill["expert_reload_s"])
         a.aim_elapsed = 0.0
         self._emit("shot", agent=a.id, arrow=b.id, team=a.team)
@@ -264,7 +287,7 @@ class Environment:
                     else:
                         hits.append((u, 0, "rack", spot))
         for a in self.agents.values():
-            if a.id == b.shooter or a.status == Status.ELIMINATED:
+            if a.id == b.shooter or a.id in b.evaded_agents or a.status == Status.ELIMINATED:
                 continue
             u = segment_cylinder(p, q, old_positions[a.id], new_positions[a.id], c["physics"]["player_radius_m"] + radius, self.player_height(a) + radius)
             if u is not None:
@@ -284,11 +307,13 @@ class Environment:
 
     def _fly(self, dt, old_positions, new_positions, actions, rewards):
         c, trajectories, candidates, heap = self.config, {}, {}, []
+        end_velocities = {}
         for b in self.arrows.values():
             if b.state != "flying":
                 continue
             p, v = b.position, b.velocity
-            q = (p[0] + v[0] * dt, p[1] + v[1] * dt, p[2] + v[2] * dt - 0.5 * c["physics"]["gravity_m_s2"] * dt * dt)
+            q, end_velocities[b.id] = advance_arrow(p, v, dt, c["physics"]["gravity_m_s2"],
+                                                  c["physics"].get("linear_drag_s_inv", 0.0))
             trajectories[b.id] = (p, q)
             candidates[b.id] = self._contacts(b, p, q, old_positions, new_positions)
             if candidates[b.id]:
@@ -316,6 +341,15 @@ class Environment:
                             heappush(heap, (uu, pp, bid, idx, kk, tt))
                         continue
                     shooter = self.agents[b.shooter]
+                    if a.team != shooter.team and alive_before[a.id] == Status.ACTIVE and self._try_dodge(a, b, actions[a.id]):
+                        b.evaded_agents.add(a.id)
+                        # A saved hit continues to the next collision, including
+                        # another player; it does not disappear on a dodge.
+                        idx += 1
+                        if idx < len(candidates[bid]):
+                            uu, pp, kk, tt = candidates[bid][idx]
+                            heappush(heap, (uu, pp, bid, idx, kk, tt))
+                        continue
                     caught = False
                     if a.team != shooter.team and alive_before[a.id] == Status.ACTIVE and a.catch_left > 0 and len(a.inventory) < c["rules"]["carry_limit"]:
                         action = actions[a.id]
@@ -329,6 +363,8 @@ class Environment:
                         rewards[a.id] += c["rewards"]["catch"]
                         self._emit("catch", agent=a.id, arrow=bid)
                     else:
+                        if hasattr(self, '_on_body_contact'):
+                            self._on_body_contact(a, b, shooter, alive_before[a.id] == Status.ACTIVE)
                         self._ground(b, point)
                         if a.team != shooter.team and alive_before[a.id] == Status.ACTIVE:
                             victims.setdefault(a.id, shooter)
@@ -340,8 +376,13 @@ class Environment:
                         rewards[b.shooter] += c["rewards"]["target"]
                         self._emit("target", spot=target, shooter=b.shooter)
                     self._ground(b, point)
+                elif kind == "skirmish_rack":
+                    self._contact_skirmish_rack(b, target, point, rewards)
                 else:
-                    self._ground(b, point)
+                    if kind == "obstacle":
+                        self._emit("obstacle_block", arrow=bid, shooter=b.shooter, obstacle=self.obstacles[target].id)
+                    impact_velocity = advance_arrow(p, b.velocity, dt*u, c['physics']['gravity_m_s2'], c['physics'].get('linear_drag_s_inv',0))[1]
+                    self._finish_flight(b, point, kind, impact_velocity, dt*(1-u))
             for aid, shooter in victims.items():
                 self.agents[aid].position = lerp(old_positions[aid], new_positions[aid], u)
                 self._eliminate(self.agents[aid], shooter, rewards)
@@ -349,8 +390,20 @@ class Environment:
             b = self.arrows[bid]
             if b.state == "flying":
                 b.position = q
-                b.velocity = (b.velocity[0], b.velocity[1], b.velocity[2] - c["physics"]["gravity_m_s2"] * dt)
+                b.velocity = end_velocities[bid]
                 b.flight_left -= dt
+
+    def _try_dodge(self, agent, arrow, action):
+        return False
+
+    def _finish_flight(self, arrow, point, kind, velocity, remaining_tick_s):
+        self._ground(arrow, point)
+
+    def _allowed_arrow_states(self):
+        return {'ground','carried','flying'}
+
+    def _drop(self, agent):
+        """Optional mode-specific stash interaction."""
 
     def _pickup_allowed(self, a, b):
         return not (b.opening_arrow and a.team == "attack" and a.opening_received)
@@ -363,11 +416,11 @@ class Environment:
     def _pickup(self, actions, dt):
         c, proposals = self.config, []
         for a in self.agents.values():
-            if a.status == Status.ELIMINATED or actions[a.id].interaction != "pickup" or len(a.inventory) >= c["rules"]["carry_limit"]:
+            if a.status == Status.ELIMINATED or actions[a.id].interaction != "pickup" or len(a.inventory) >= c["rules"]["carry_limit"] or not self._pickup_progress_allowed(a):
                 a.pickup_elapsed = 0.0
                 continue
             a.pickup_elapsed += dt
-            if a.pickup_elapsed + 1e-9 < c["physics"]["pickup_s"]:
+            if a.pickup_elapsed + 1e-9 < self._pickup_duration(a):
                 continue
             xmin, xmax = c["teams"][a.team]["pickup_x_bounds_m"]
             for b in self.arrows.values():
@@ -416,10 +469,12 @@ class Environment:
             a.crouched = action.crouch
             dx, dy = action.move
             norm = max(1.0, hypot(dx, dy))
-            speed = self.config["physics"]["move_speed_m_s"] * (self.config["physics"]["crouch_speed_fraction"] if a.crouched else 1.0)
+            speed = self._movement_speed(a) if hasattr(self,'_movement_speed') else self.config["physics"]["move_speed_m_s"] * (self.config["physics"]["crouch_speed_fraction"] if a.crouched else 1.0)
             new = (a.position[0] + dx / norm * speed * dt, a.position[1] + dy / norm * speed * dt)
             if self.valid_move(a, a.position, new):
                 proposals[a.id] = new
+        if hasattr(self,'_resolve_proposals'):
+            proposals=self._resolve_proposals(old_positions,proposals,actions,dt)
         # Symmetric rejection of crossing/overlapping proposals.
         radius = self.config["physics"]["player_radius_m"]
         # A stopped player can block a third player's previously clear proposal.
@@ -451,11 +506,14 @@ class Environment:
                     a.aim_elapsed = 0.0
                 a.aim_key = action.aim_key
                 a.aim_elapsed += dt
+            self._on_aim_progress(a, action, dt)
             if action.interaction == "catch" and self.config["rules"]["catch_enabled"] and a.status == Status.ACTIVE and a.catch_cooldown == 0:
                 a.catch_left = self.config["rules"]["catch_window_s"]
                 a.catch_cooldown = self.config["rules"]["catch_cooldown_s"]
             elif action.interaction == "shoot":
                 self._release(a, action)
+            elif action.interaction == "drop":
+                self._drop(a)
         self._fly(dt, old_positions, proposals, actions, rewards)
         for a in active:
             a.position = proposals[a.id]
@@ -496,8 +554,11 @@ class Environment:
                 enemies.append({"id": b.id, "position": b.position, "velocity": b.velocity, "height": self.player_height(b), "status": b.status.value})
         ground = [{"id": b.id, "position": b.position, "opening_arrow": b.opening_arrow, "opening_owner": b.opening_owner} for b in self.arrows.values() if b.state == "ground" and visible((b.position[0], b.position[1], 0.05))]
         flying = [{"id": b.id, "position": b.position, "velocity": b.velocity} for b in self.arrows.values() if b.state == "flying" and visible(b.position)]
+        teammates = [{"id": b.id, "position": b.position, "velocity": b.velocity}
+                     for b in self.agents.values() if b.id != a.id and b.team == a.team
+                     and b.status != Status.ELIMINATED and visible((*b.position, self.player_height(b) * 0.9))]
         return {"time": self.t, "self": {"id": a.id, "team": a.team, "position": a.position, "velocity": a.velocity, "status": a.status.value, "eta": a.eta, "ammo": len(a.inventory), "has_bow": a.has_bow, "reload_left": a.reload_left, "aim_elapsed": a.aim_elapsed, "opening_received": a.opening_received, "center_visited": a.center_visited, "shoot_unlocked": a.shoot_unlocked, "lives": a.lives, "spawn": a.spawn},
-                "enemies": enemies, "ground_arrows": ground, "flying_arrows": flying,
+                "enemies": enemies, "teammates": teammates, "ground_arrows": ground, "flying_arrows": flying,
                 "spots": [{"id": k, "position": self.rack.spot(k), "standing": self.rack.standing[k]} for k in range(5)] if self.rack is not None else []}
 
     def assert_invariants(self):
@@ -511,7 +572,7 @@ class Environment:
             if a.status == Status.ELIMINATED:
                 assert not a.inventory
         for b in self.arrows.values():
-            assert b.state in ("ground", "carried", "flying")
+            assert b.state in self._allowed_arrow_states()
             assert (b.carrier is not None) == (b.state == "carried")
 
     def _sample_metrics(self, elapsed=0.0):
@@ -525,6 +586,8 @@ class Environment:
                     self.cover_seconds += elapsed
         states = Counter(b.state for b in self.arrows.values())
         self.resource_curve.append({"t": self.t, "ground": states["ground"], "carried": states["carried"], "flying": states["flying"], "attack_ammo": sum(len(a.inventory) for a in active if a.team == "attack"), "defense_ammo": sum(len(a.inventory) for a in active if a.team == "defense"), "shots": self.counts["shot"], "remaining_spots": sum(self.rack.standing) if self.rack is not None else None})
+        if self.config.get('ground_runout',{}).get('enabled'):
+            self.resource_curve[-1]['settling']=states['settling']
 
     def _record_frame(self):
         """Read-only replay snapshots; never consume RNG or change game metrics."""

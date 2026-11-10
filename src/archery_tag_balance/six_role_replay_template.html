@@ -1,0 +1,187 @@
+<meta charset="utf-8">
+<div id="__REPLAY_ROOT__" class="archery-replay">
+<style>
+ #__REPLAY_ROOT__{max-width:1320px;margin:12px auto;background:#f5f7fa;color:#26384b;font:14px system-ui,-apple-system,sans-serif;border:1px solid #dce3ec;border-radius:12px;overflow:hidden}
+ #__REPLAY_ROOT__ *{box-sizing:border-box}
+ #__REPLAY_ROOT__ .top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 20px;background:white;flex-wrap:wrap}
+ #__REPLAY_ROOT__ .title{font-weight:700;font-size:19px} #__REPLAY_ROOT__ .sub{color:#6a7c90;font-size:12px;margin-top:5px}
+ #__REPLAY_ROOT__ .clock{font:700 23px ui-monospace,monospace;text-align:right}
+ #__REPLAY_ROOT__ canvas{display:block;width:100%;height:auto;background:white}
+ #__REPLAY_ROOT__ .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 18px;background:white;border-block:1px solid #e1e7ee}
+ #__REPLAY_ROOT__ button,#__REPLAY_ROOT__ select{font:inherit;padding:7px 11px;border:1px solid #cbd6e4;border-radius:7px;background:white;color:#26384b;cursor:pointer}
+ #__REPLAY_ROOT__ [data-play]{background:#28577b;color:white;min-width:72px}
+ #__REPLAY_ROOT__ input{min-width:120px;flex:1;accent-color:#28577b}
+ #__REPLAY_ROOT__ .time{font:12px ui-monospace,monospace;min-width:110px;text-align:right}
+ #__REPLAY_ROOT__ .bottom{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;padding:14px 18px}
+ #__REPLAY_ROOT__ .panel{background:white;border:1px solid #e1e7ee;border-radius:8px;padding:12px;min-width:0}
+ #__REPLAY_ROOT__ .panel-title{font-size:12px;font-weight:700;color:#6a7c90;margin-bottom:8px}
+ #__REPLAY_ROOT__ .roster{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:12px}
+ #__REPLAY_ROOT__ .event{font-size:12px;line-height:1.8}
+ #__REPLAY_ROOT__ .footer{padding:0 18px 14px;font-size:12px;color:#6a7c90;line-height:1.7}
+ @media(max-width:760px){#__REPLAY_ROOT__ .bottom{grid-template-columns:1fr}#__REPLAY_ROOT__ .roster{grid-template-columns:1fr}}
+</style>
+<div class="top"><div><div class="title">攻防箭 · 六人站位与单箭对抗 v4</div><div class="sub" data-description></div></div><div><div class="clock" data-clock></div><div class="sub" data-result></div></div></div>
+<canvas width="1320" height="690" aria-label="6v6场地、双方五孔靶实时正视图、比分与射箭阶段"></canvas>
+<div class="controls">
+ <button data-play>播放</button><button data-reset>回到开局</button><button data-prev>上一帧</button><button data-next>下一帧</button>
+ <input data-seek type="range" min="0" value="0" step="0.01" aria-label="回放进度"><span class="time" data-time></span>
+ <label>回放速度 <select data-speed><option value="0.5">0.5×</option><option value="1">1× 实时</option><option value="2">2×</option><option value="4">4×</option><option value="8">8×</option></select></label>
+</div>
+<div class="bottom"><div class="panel"><div class="panel-title">队员 · 位置 / 剩余生命 / 箭 / 当前动作 / 体力</div><div class="roster" data-roster></div></div><div class="panel"><div class="panel-title">最近事件</div><div data-events></div></div></div>
+<div class="footer">各队依次为：左边路、左掩体、中间人1、中间人2、右掩体、右边路。掩体位隐藏准备、短暂探头；中路主要在开阔地。命中掉命和击落靶点各得1分，超时比总分；五个靶点各只能得分一次。场上箭路仍按实体碰撞判定。当前为未校准的脚本模拟。</div>
+<script>
+(()=>{
+ 'use strict';
+ const root=document.getElementById('__REPLAY_ROOT__'),data=__REPLAY_DATA__;
+ const find=s=>root.querySelector(s),canvas=find('canvas'),ctx=canvas.getContext('2d');
+ const frames=data.frames,duration=data.duration,seek=find('[data-seek]'),speed=find('[data-speed]'),play=find('[data-play]');
+ const colors={attack:'#ce394d',defense:'#276cb0'},label=t=>t==='attack'?'红队':'蓝队',short=id=>String(id).replace('attack_','R').replace('defense_','B');
+ const roles={left_flank:'左边路',left_cover:'左掩体',center_1:'中间人1',center_2:'中间人2',right_cover:'右掩体',right_flank:'右边路'};
+ const stages={out:'离场',opening:'取箭回线',pickup:'捡箭',search:'寻找箭',waiting_arrow:'无箭观察',nocking:'上箭',aiming:'瞄准',ready:'观察'};
+ const styles={sidestep:'侧移',withdraw:'后撤',duck:'压低'};
+ const aimStyles={snap:'快射',balanced:'常规',deliberate:'慢瞄'};
+ stages.caching='布置备箭';stages.return_bow='回底线拿弓';
+ if(data.variedV5){
+  find('.title').textContent='攻防箭 · 个性瞄准、射后动作与协同取箭 v5';
+  find('.footer').textContent='箭的落地时间随这一箭的速度、角度和阻力变化；仍限制长抛。快射更快但散布较大，站稳瞄准逐步改善精度。大多数人正常收势，少数人有小幅横移／后撤习惯。绿色虚线是队友报点后分配的取箭目标，仍只能在本方半场取箭。';
+ }
+ if(data.groundRunout){
+  find('.title').textContent='攻防箭 · 落地弹滑与死箭回收 v6';
+  find('.footer').textContent='金色为仍有效的飞行箭；落地后变为浅灰弹滑箭，不能命中、不能捡；停稳后变为实心灰点才可捡。空心小圈标出初落点，浅灰虚线显示已经滑过的路径。场边网直接截停箭，地面弹滑不会扩大有效射程。';
+ }
+ if(data.reboundV7){find('.title').textContent='攻防箭 · 地面长滑、板面反弹与岗位备箭 v7';find('.footer').textContent='地面箭弹滑更远，左右偏差更明显；掩体和靶板空白处会把箭弹回，反弹箭也是死箭，停稳才能捡。击中靶点仍按原规则计分。开局先将两支备用箭存到岗位附近，再回底线拿弓。圈内数字表示备箭点当前地面箭量。';}
+ const L=data.field.length_m,W=data.field.width_m,scale=Math.min(920/L,460/W),left=195,top=96;
+ const X=x=>left+x*scale,Y=y=>top+(W-y)*scale;
+ let time=0,playing=false,last=null,rate=data.speed,raf=null;
+ seek.max=String(duration);speed.value=String(rate);
+ find('[data-description]').textContent=`${L} × ${W} m · 每人两条命 · 一次带一支 · seed ${data.seed} · 1×为真实模拟时间`;
+ const text=(s,x,y,size=12,col='#26384b',align='left',bold=false)=>{ctx.font=`${bold?'600 ':''}${size}px system-ui,sans-serif`;ctx.fillStyle=col;ctx.textAlign=align;ctx.fillText(s,x,y);};
+ const circle=(x,y,r,fill,stroke=null,width=1)=>{ctx.beginPath();ctx.arc(x,y,r,0,2*Math.PI);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}};
+ function frameIndex(t){let lo=0,hi=frames.length-1;while(lo<hi){const m=Math.ceil((lo+hi)/2);if(frames[m].t<=t)lo=m;else hi=m-1;}return lo;}
+ function scene(t){
+  const i=frameIndex(t),a=frames[i],b=frames[Math.min(i+1,frames.length-1)],fraction=b.t>a.t?(t-a.t)/(b.t-a.t):0;
+  const mix=(p,q)=>p.map((v,j)=>v+(q[j]-v)*fraction),nextPlayers=new Map(b.players.map(p=>[p.id,p])),nextArrows=new Map(b.arrows.map(p=>[p.id,p]));
+  const players=a.players.map(p=>{const n=nextPlayers.get(p.id);return {...p,position:n&&p.status!=='eliminated'&&n.status!=='eliminated'?mix(p.position,n.position):p.position};});
+  const arrows=a.arrows.map(p=>{const n=nextArrows.get(p.id);return {...p,position:n&&((p.state==='flying'&&n.state==='flying')||(p.state==='settling'&&['settling','ground'].includes(n.state)))?mix(p.position,n.position):p.position};});
+  return {...a,players,arrows};
+ }
+ function rackPanel(s,rack,x){
+  const col=colors[rack.team],y=196,w=140,h=140,rs=w/rack.size[0],standing=s.racks[rack.team];
+  text(`${label(rack.team)}五孔靶`,x+w/2,y-24,15,col,'center',true);
+  ctx.fillStyle='#f1ece3';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#b49c7b';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
+  for(let k=0;k<5;k++){
+   const [horizontal,vertical]=rack.offsets[k],cx=x+w/2+horizontal*rs,cy=y+h/2-vertical*rs;
+   const failed=data.events.some(e=>e.kind==='rack_roll'&&!e.success&&e.team===rack.team&&e.spot===k&&e.t<=time&&time-e.t<0.7);
+   circle(cx,cy,rack.radius*rs,standing[k]?col:'white',failed?'#de9c28':standing[k]?col:'#c9c0b2',failed?4:1.5);
+   text(String(k+1),cx,cy+4,12,standing[k]?'white':'#a29481','center');
+  }
+  text(`剩余 ${standing.filter(Boolean).length} / 5`,x+w/2,y+h+26,14,col,'center',true);
+  text('实心：未击落',x+w/2,y+h+50,11,'#7c8a99','center');
+  text('空心：已击落',x+w/2,y+h+69,11,'#7c8a99','center');
+  const score=s.scores[rack.team],total=score.body+score.target;
+  text(`${label(rack.team)} ${total} 分`,x+w/2,105,22,col,'center',true);
+  text(`掉命 ${score.body} ＋ 靶点 ${score.target}`,x+w/2,130,12,col,'center');
+  const lives=s.players.filter(p=>p.team===rack.team).reduce((n,p)=>n+p.lives,0);
+  text(`本方剩余 ${lives} 条命`,x+w/2,y+h+112,13,col,'center');
+ }
+ function background(s){
+  ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#fcf1f2';ctx.fillRect(X(0),Y(W),L/2*scale,W*scale);ctx.fillStyle='#edf5fd';ctx.fillRect(X(L/2),Y(W),L/2*scale,W*scale);
+  ctx.strokeStyle='#dfe6ed';ctx.lineWidth=.6;
+  for(let x=0;x<=L;x++){ctx.beginPath();ctx.moveTo(X(x),Y(0));ctx.lineTo(X(x),Y(W));ctx.stroke();}
+  for(let y=0;y<=W;y++){ctx.beginPath();ctx.moveTo(X(0),Y(y));ctx.lineTo(X(L),Y(y));ctx.stroke();}
+  ctx.strokeStyle='#6d7e90';ctx.lineWidth=1;ctx.strokeRect(X(0),Y(W),L*scale,W*scale);ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(X(L/2),Y(W));ctx.lineTo(X(L/2),Y(0));ctx.stroke();ctx.setLineDash([]);
+  text('红队 →',X(1),58,17,colors.attack,'left',true);text('← 蓝队',X(L-1),58,17,colors.defense,'right',true);
+  text(s.combat_started?'单箭对抗 · 掩体位隐藏准备后再探头':'统一取箭阶段 · 等待所有人回到底线',X(L/2),76,12,'#667b90','center');
+  for(let x=0;x<=L;x+=2)text(String(x),X(x),Y(0)+20,10,'#7b8b9b','center');
+  for(let y=0;y<=W;y+=2)text(String(y),left-9,Y(y)+3,10,'#7b8b9b','right');
+  if(data.groundRunout){
+   for(const xx of [0,L]){
+    ctx.strokeStyle='#667d90';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(xx),Y(0));ctx.lineTo(X(xx),Y(W));ctx.stroke();
+    for(let yy=0;yy<W;yy+=.35){ctx.strokeStyle='#9cacba';ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(X(xx)-4,Y(yy));ctx.lineTo(X(xx)+4,Y(Math.min(W,yy+.18)));ctx.stroke();}
+    text('底线网',X(xx),Y(W)-10,10,'#687e90','center');
+   }
+  }
+  for(const o of data.obstacles){const [x,y]=o.center,[sx,sy]=o.size;ctx.fillStyle='#5c7181';ctx.fillRect(X(x-sx/2),Y(y+sy/2),Math.max(4,sx*scale),sy*scale);}
+  for(const rack of data.skirmishRacks){const [x,y]=rack.position;ctx.strokeStyle=colors[rack.team];ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(X(x),Y(y-rack.size[0]/2));ctx.lineTo(X(x),Y(y+rack.size[0]/2));ctx.stroke();text('靶',X(x),Y(y)-23,11,colors[rack.team],'center');}
+  for(const [j,rack] of data.skirmishRacks.entries())rackPanel(s,rack,j===0?20:1160);
+ }
+ function render(){
+  const s=scene(time);background(s);
+  if(data.reboundV7){for(const p of s.players){if(!p.cache_position)continue;const [cx,cy]=p.cache_position;
+   const count=s.arrows.filter(b=>b.state==='ground'&&Math.hypot(b.position[0]-cx,b.position[1]-cy)<.16).length;
+   if(count||!s.combat_started){circle(X(cx),Y(cy),8,'transparent',colors[p.team]+'88',1);if(count)text(String(count),X(cx),Y(cy)-10,10,colors[p.team],'center');}
+  }}
+  if(data.variedV5){
+   for(const p of s.players){
+    if(p.status==='eliminated'||p.ammo||!p.supply_goal)continue;
+    const [gx,gy]=p.supply_goal;
+    if(Math.hypot(gx-p.position[0],gy-p.position[1])<.8)continue;
+    ctx.strokeStyle='#22968055';ctx.lineWidth=1;ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(X(p.position[0]),Y(p.position[1]));ctx.lineTo(X(gx),Y(gy));ctx.stroke();ctx.setLineDash([]);
+    circle(X(gx),Y(gy),5,'transparent','#229680',1);
+   }
+  }
+  for(const arrow of s.arrows){
+   const [x,y,z]=arrow.position;
+   if(arrow.state==='ground'){circle(X(x),Y(y),2,'#9caab7');continue;}
+   if(arrow.state==='settling'){
+    const origin=arrow.landing_origin;
+    if(origin){
+     circle(X(origin[0]),Y(origin[1]),3,'transparent','#a7afb8',1);
+     ctx.strokeStyle='#a7afb899';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(X(origin[0]),Y(origin[1]));ctx.lineTo(X(x),Y(y));ctx.stroke();ctx.setLineDash([]);
+    }
+    circle(X(x),Y(y),2.5,'#667b8c26');
+    circle(X(x),Y(y)-Math.max(0,z)*scale*1.5,2.7,arrow.settling_kind==='rebound'?'#c5bdd8':'#c8cfd6',arrow.settling_kind==='rebound'?'#8a77a2':'#8898a6',.8);
+    continue;
+   }
+   const vx=arrow.velocity[0],vy=arrow.velocity[1],norm=Math.hypot(vx,vy)||1,dx=vx/norm,dy=-vy/norm,xx=X(x),yy=Y(y);
+   ctx.strokeStyle='#d49520';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(xx-12*dx,yy-12*dy);ctx.lineTo(xx,yy);ctx.stroke();circle(xx,yy,2.5,'#d49520');
+  }
+  for(const p of s.players){
+   if(p.status==='eliminated')continue;
+   const [x,y]=p.position,col=colors[p.team],radius=data.playerRadius*scale;
+   circle(X(x)+1,Y(y)+3,radius,'#26384b18');
+   circle(X(x),Y(y),p.crouched?radius*.8:radius,col,p.status==='invincible'?'#dca12a':'white',p.status==='invincible'?3:1.3);
+   const recentlyDodged=data.events.some(e=>e.kind==='dodge'&&e.agent===p.id&&e.t<=time&&time-e.t<.5);
+   if(recentlyDodged)circle(X(x),Y(y),radius+6,'transparent','#219b7c',1.5);
+   text(`${short(p.id)} ${roles[p.role]}`,X(x),Y(y)-15,10,col,'center',true);
+   const state=styles[p.evasion_kind]||stages[p.stage]||'';
+   text(`${p.ammo}箭 · ${state}`,X(x),Y(y)+22,10,'#5c7184','center');
+   ctx.fillStyle='#dbe3e9';ctx.fillRect(X(x)-10,Y(y)+27,20,3);ctx.fillStyle=p.stamina<.35?'#cf963d':'#209f7c';ctx.fillRect(X(x)-10,Y(y)+27,20*p.stamina,3);
+  }
+  text(data.reboundV7?'金色：活箭 ｜ 浅灰：地面弹滑 ｜ 淡紫：撞板反弹 ｜ 实心灰点：停稳可捡':data.groundRunout?'金色：有效飞行箭 ｜ 浅灰跳动：落地弹滑，不可捡 ｜ 实心灰点：停稳可捡':'俯视位置不表示人体高度；小圆点是地面箭，金色短线是飞行箭。',left,619,12,'#6b7d90');
+  text('靶架正视图显示本方靶点；本方靶分来自击落对方靶点。橙色边框表示击中但未击落。',left,643,12,'#6b7d90');
+  find('[data-clock]').textContent=`${Math.max(0,data.roundDuration-time).toFixed(1)} s`;
+  find('[data-result]').textContent=time>=duration?(data.winner==='draw'?'平局':`${label(data.winner)}获胜`)+(data.victoryReason==='score'?' · 超时比较总分':' · 全员淘汰'):s.combat_started?'对抗中':'取箭回线中';
+  find('[data-time]').textContent=`${time.toFixed(1)} / ${duration.toFixed(1)} s`;seek.value=String(time);
+  const roster=find('[data-roster]');roster.replaceChildren();
+  const ordered=s.players.slice().sort((a,b)=>Number(a.id.split('_')[1])-Number(b.id.split('_')[1])||(a.team==='attack'?-1:1));
+  for(const p of ordered){
+   const line=document.createElement('div');line.style.color=colors[p.team];
+   const state=p.status==='eliminated'?(p.respawn_at!=null?`复活 ${Math.max(0,p.respawn_at-time).toFixed(1)}s`:'出局'):styles[p.evasion_kind]||stages[p.stage];
+   const personal=data.variedV5?` · ${aimStyles[p.aim_style]}`:'';
+   const aimProgress=data.variedV5&&p.stage==='aiming'?` ${p.aim_elapsed.toFixed(1)}/${p.aim_required.toFixed(1)}s`:'';
+   line.textContent=`${short(p.id)} ${roles[p.role]}${personal} · ${p.lives}命 / ${p.ammo}箭 · ${state}${p.stage==='nocking'?' '+p.reload_left.toFixed(1)+'s':''}${aimProgress} · 体力${Math.round(p.stamina*100)}%`;
+   roster.appendChild(line);
+  }
+  const log=find('[data-events]');log.replaceChildren();
+  const recent=data.events.filter(e=>e.t<=time&&(['hit','rack_target','combat_start','respawn','dodge'].includes(e.kind)||(e.kind==='nock'&&e.fumble)||(e.kind==='rack_roll'&&!e.success))).slice(-5).reverse();
+  for(const e of recent){
+   const line=document.createElement('div');line.className='event';
+   const desc=e.kind==='hit'?`${short(e.shooter)} 命中 ${short(e.victim)}，+1分`:e.kind==='rack_target'?`${short(e.shooter)} 击落${label(e.team)}靶点${e.spot+1}，+1分`:e.kind==='rack_roll'?`${short(e.shooter)} 击中靶点${e.spot+1}，未击落`:e.kind==='combat_start'?'全员回线，开始对抗':e.kind==='nock'?`${short(e.agent)} 上箭不顺，延长准备`:e.kind==='respawn'?`${short(e.agent)} 复活`:`${short(e.agent)} 极限闪避`;
+   line.textContent=`${e.t.toFixed(1)}s  ${desc}`;log.appendChild(line);
+  }
+  root.dataset.currentTime=String(time);root.dataset.frameIndex=String(frameIndex(time));root.dataset.playing=String(playing);
+ }
+ function setPlaying(value){playing=value;play.textContent=playing?'暂停':'播放';last=null;if(playing&&raf===null)raf=requestAnimationFrame(tick);render();}
+ function tick(now){raf=null;if(!root.isConnected){playing=false;return;}if(!playing)return;if(last!==null)time=Math.min(duration,time+Math.max(0,Math.min(.25,(now-last)/1000))*rate);last=now;if(time>=duration){playing=false;play.textContent='播放';last=null;}render();if(playing)raf=requestAnimationFrame(tick);}
+ play.addEventListener('click',()=>{if(!playing&&time>=duration)time=0;setPlaying(!playing);});
+ find('[data-reset]').addEventListener('click',()=>{setPlaying(false);time=0;render();});
+ seek.addEventListener('input',()=>{const requested=Number(seek.value)||0;setPlaying(false);time=Math.max(0,Math.min(duration,requested));render();});
+ find('[data-prev]').addEventListener('click',()=>{setPlaying(false);let i=frameIndex(time);if(frames[i].t>=time-1e-8)i--;time=frames[Math.max(0,i)].t;render();});
+ find('[data-next]').addEventListener('click',()=>{setPlaying(false);time=frames[Math.min(frames.length-1,frameIndex(time)+1)].t;render();});
+ speed.addEventListener('change',()=>{rate=Number(speed.value);last=null;});
+ render();
+})();
+</script>
+</div>

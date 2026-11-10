@@ -1,0 +1,376 @@
+{
+  "unit_tests": 160,
+  "episodes": [
+    {
+      "seed": 1000,
+      "scenario": null,
+      "duration_s": 240.0,
+      "shots": 79,
+      "hits": 9,
+      "passes": 29,
+      "batch_loads": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        2,
+        4,
+        4,
+        2,
+        2,
+        4,
+        2
+      ],
+      "completed_deliveries": 26,
+      "max_upper_starvation_with_rear_stock_s": [
+        2.2,
+        1.55
+      ],
+      "max_upper_starvation_after120_s": [
+        0.0,
+        0.0
+      ],
+      "first_high_cover_armed_s": {
+        "0": 2.0,
+        "1": 2.0
+      },
+      "old_far_pickup_intent_max_s": 0,
+      "max_ordinary_speed_after12_m_s": 3.001,
+      "revive_clear_s": 122.0,
+      "revive_attempts_by_live_points": {
+        "5": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "4": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "3": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "2": {
+          "attempts": 3,
+          "knocks": 1
+        },
+        "1": {
+          "attempts": 1,
+          "knocks": 1
+        }
+      },
+      "objective_shift": 1,
+      "arrow_conservation_verified": true
+    },
+    {
+      "seed": 1001,
+      "scenario": null,
+      "duration_s": 240.0,
+      "shots": 74,
+      "hits": 7,
+      "passes": 32,
+      "batch_loads": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        2,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "completed_deliveries": 29,
+      "max_upper_starvation_with_rear_stock_s": [
+        0.0,
+        1.65
+      ],
+      "max_upper_starvation_after120_s": [
+        0.0,
+        0.0
+      ],
+      "first_high_cover_armed_s": {
+        "0": 2.0,
+        "1": 2.0
+      },
+      "old_far_pickup_intent_max_s": 0,
+      "max_ordinary_speed_after12_m_s": 3.001,
+      "revive_clear_s": 234.55,
+      "revive_attempts_by_live_points": {
+        "5": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "4": {
+          "attempts": 5,
+          "knocks": 1
+        },
+        "3": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "2": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "1": {
+          "attempts": 10,
+          "knocks": 1
+        }
+      },
+      "objective_shift": 1,
+      "arrow_conservation_verified": true
+    },
+    {
+      "seed": 1002,
+      "scenario": null,
+      "duration_s": 240.0,
+      "shots": 80,
+      "hits": 7,
+      "passes": 44,
+      "batch_loads": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        2,
+        2,
+        4,
+        4,
+        2,
+        2,
+        4,
+        4,
+        4,
+        2
+      ],
+      "completed_deliveries": 39,
+      "max_upper_starvation_with_rear_stock_s": [
+        1.75,
+        2.9
+      ],
+      "max_upper_starvation_after120_s": [
+        0.0,
+        2.9
+      ],
+      "first_high_cover_armed_s": {
+        "0": 2.0,
+        "1": 2.0
+      },
+      "old_far_pickup_intent_max_s": 0,
+      "max_ordinary_speed_after12_m_s": 3.001,
+      "revive_clear_s": 182.8,
+      "revive_attempts_by_live_points": {
+        "5": {
+          "attempts": 5,
+          "knocks": 1
+        },
+        "4": {
+          "attempts": 6,
+          "knocks": 1
+        },
+        "3": {
+          "attempts": 1,
+          "knocks": 1
+        },
+        "2": {
+          "attempts": 3,
+          "knocks": 1
+        },
+        "1": {
+          "attempts": 5,
+          "knocks": 1
+        }
+      },
+      "objective_shift": 1,
+      "arrow_conservation_verified": true
+    },
+    {
+      "seed": 6106,
+      "scenario": "six_vs_one",
+      "duration_s": 44.1,
+      "shots": 22,
+      "hits": 0,
+      "passes": 6,
+      "batch_loads": [
+        4,
+        4,
+        4,
+        3
+      ],
+      "completed_deliveries": 5,
+      "max_upper_starvation_with_rear_stock_s": [
+        0.0,
+        3.25
+      ],
+      "max_upper_starvation_after120_s": [
+        0.0,
+        0.0
+      ],
+      "first_high_cover_armed_s": {
+        "1": 0.0
+      },
+      "old_far_pickup_intent_max_s": 0,
+      "max_ordinary_speed_after12_m_s": 3.001,
+      "revive_clear_s": null,
+      "revive_attempts_by_live_points": {
+        "5": {
+          "attempts": 5,
+          "knocks": 1
+        }
+      },
+      "objective_shift": 0,
+      "arrow_conservation_verified": true
+    },
+    {
+      "seed": 6200,
+      "scenario": "rear_stock",
+      "duration_s": 40.0,
+      "shots": 6,
+      "hits": 0,
+      "passes": 15,
+      "batch_loads": [
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "completed_deliveries": 12,
+      "max_upper_starvation_with_rear_stock_s": [
+        13.15,
+        14.0
+      ],
+      "max_upper_starvation_after120_s": [
+        0.0,
+        0.0
+      ],
+      "first_high_cover_armed_s": {
+        "0": 13.15,
+        "1": 14.0
+      },
+      "old_far_pickup_intent_max_s": 0,
+      "max_ordinary_speed_after12_m_s": 3.001,
+      "revive_clear_s": 0.0,
+      "revive_attempts_by_live_points": {},
+      "objective_shift": 1,
+      "arrow_conservation_verified": true
+    }
+  ],
+  "supply_symptom_metrics": [
+    {
+      "seed": 1000,
+      "duration_s": 240.0,
+      "passes": 29,
+      "quick_repasses": 0,
+      "unjustified_empty_near_rear_arrow_player_s": 12.75,
+      "longest_unjustified_idle_s": 1.25,
+      "cluster_pairwise_threshold_m": 3.5,
+      "three_person_cluster_team_s": 11.25,
+      "longest_three_person_cluster_s": 4.0,
+      "shots": 79,
+      "hits": 9
+    },
+    {
+      "seed": 1001,
+      "duration_s": 240.0,
+      "passes": 32,
+      "quick_repasses": 0,
+      "unjustified_empty_near_rear_arrow_player_s": 17.0,
+      "longest_unjustified_idle_s": 1.5,
+      "cluster_pairwise_threshold_m": 3.5,
+      "three_person_cluster_team_s": 5.75,
+      "longest_three_person_cluster_s": 1.25,
+      "shots": 74,
+      "hits": 7
+    },
+    {
+      "seed": 1002,
+      "duration_s": 240.0,
+      "passes": 44,
+      "quick_repasses": 0,
+      "unjustified_empty_near_rear_arrow_player_s": 17.75,
+      "longest_unjustified_idle_s": 2.0,
+      "cluster_pairwise_threshold_m": 3.5,
+      "three_person_cluster_team_s": 6.5,
+      "longest_three_person_cluster_s": 2.0,
+      "shots": 80,
+      "hits": 7
+    },
+    {
+      "seed": 6106,
+      "duration_s": 44.1,
+      "passes": 6,
+      "quick_repasses": 0,
+      "unjustified_empty_near_rear_arrow_player_s": 22.0,
+      "longest_unjustified_idle_s": 19.5,
+      "cluster_pairwise_threshold_m": 3.5,
+      "three_person_cluster_team_s": 0.0,
+      "longest_three_person_cluster_s": 0.0,
+      "shots": 22,
+      "hits": 0
+    },
+    {
+      "seed": 6200,
+      "duration_s": 40.0,
+      "passes": 15,
+      "quick_repasses": 0,
+      "unjustified_empty_near_rear_arrow_player_s": 1.0,
+      "longest_unjustified_idle_s": 1.0,
+      "cluster_pairwise_threshold_m": 3.5,
+      "three_person_cluster_team_s": 6.25,
+      "longest_three_person_cluster_s": 2.75,
+      "shots": 6,
+      "hits": 0
+    }
+  ],
+  "notes": [
+    "Transport quota up to 4 is separate from combat carry preference.",
+    "No remaining-disk probability multiplier is used; actual scatter may hit any still-standing disk.",
+    "Ordinary movement accelerates and is capped at 3m/s; opening runs and reactive evasion remain faster.",
+    "A source-distribution test is a labelled 40-second segment, not an adjudicated full game."
+  ]
+}

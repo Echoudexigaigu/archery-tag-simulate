@@ -1,0 +1,305 @@
+{
+  "attack_0": {
+    "player_id": "P01",
+    "alias": "虚构示例P01",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.7,
+      "aim_patience": 0.2,
+      "cover_preference": 0.3,
+      "target_preference": 0.2,
+      "attention_breadth": 0.7,
+      "scan_frequency": 0.7
+    },
+    "opponent_beliefs": {}
+  },
+  "attack_1": {
+    "player_id": "P02",
+    "alias": "虚构示例P02",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.25,
+      "aim_patience": 0.8,
+      "cover_preference": 0.9,
+      "target_preference": 0.65,
+      "attention_breadth": 0.3,
+      "scan_frequency": 0.3
+    },
+    "opponent_beliefs": {
+      "P07": 0.85,
+      "P12": 0.3
+    }
+  },
+  "attack_2": {
+    "player_id": "P03",
+    "alias": "虚构示例P03",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.5,
+      "aim_patience": 0.5,
+      "cover_preference": 0.4,
+      "target_preference": 0.4,
+      "attention_breadth": 0.6,
+      "scan_frequency": 0.6
+    },
+    "opponent_beliefs": {}
+  },
+  "attack_3": {
+    "player_id": "P04",
+    "alias": "虚构示例P04",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.7,
+      "aim_patience": 0.3,
+      "cover_preference": 0.4,
+      "target_preference": 0.5,
+      "attention_breadth": 0.7,
+      "scan_frequency": 0.6
+    },
+    "opponent_beliefs": {}
+  },
+  "attack_4": {
+    "player_id": "P05",
+    "alias": "虚构示例P05",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.4,
+      "aim_patience": 0.65,
+      "cover_preference": 0.85,
+      "target_preference": 0.8,
+      "attention_breadth": 0.4,
+      "scan_frequency": 0.4
+    },
+    "opponent_beliefs": {}
+  },
+  "attack_5": {
+    "player_id": "P06",
+    "alias": "虚构示例P06",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.8,
+      "aim_patience": 0.2,
+      "cover_preference": 0.2,
+      "target_preference": 0.5,
+      "attention_breadth": 0.55,
+      "scan_frequency": 0.6
+    },
+    "opponent_beliefs": {}
+  },
+  "defense_0": {
+    "player_id": "P07",
+    "alias": "虚构示例P07",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.7,
+      "aim_patience": 0.2,
+      "cover_preference": 0.3,
+      "target_preference": 0.2,
+      "attention_breadth": 0.7,
+      "scan_frequency": 0.7
+    },
+    "opponent_beliefs": {}
+  },
+  "defense_1": {
+    "player_id": "P08",
+    "alias": "虚构示例P08",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.8,
+      "aim_patience": 0.35,
+      "cover_preference": 0.3,
+      "target_preference": 0.65,
+      "attention_breadth": 0.75,
+      "scan_frequency": 0.75
+    },
+    "opponent_beliefs": {}
+  },
+  "defense_2": {
+    "player_id": "P09",
+    "alias": "虚构示例P09",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.5,
+      "aim_patience": 0.5,
+      "cover_preference": 0.4,
+      "target_preference": 0.4,
+      "attention_breadth": 0.6,
+      "scan_frequency": 0.6
+    },
+    "opponent_beliefs": {}
+  },
+  "defense_3": {
+    "player_id": "P10",
+    "alias": "虚构示例P10",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.7,
+      "aim_patience": 0.3,
+      "cover_preference": 0.4,
+      "target_preference": 0.5,
+      "attention_breadth": 0.7,
+      "scan_frequency": 0.6
+    },
+    "opponent_beliefs": {}
+  },
+  "defense_4": {
+    "player_id": "P11",
+    "alias": "虚构示例P11",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.4,
+      "aim_patience": 0.65,
+      "cover_preference": 0.85,
+      "target_preference": 0.8,
+      "attention_breadth": 0.4,
+      "scan_frequency": 0.4
+    },
+    "opponent_beliefs": {}
+  },
+  "defense_5": {
+    "player_id": "P12",
+    "alias": "虚构示例P12",
+    "is_demo": true,
+    "source": "synthetic_demo",
+    "skills": {
+      "body_accuracy": 0.75,
+      "target_accuracy": 0.75,
+      "reaction": 0.75,
+      "agility": 0.75,
+      "pickup": 0.75,
+      "nocking": 0.75,
+      "carry_control": 0.75,
+      "endurance": 0.75
+    },
+    "style": {
+      "risk_tolerance": 0.8,
+      "aim_patience": 0.2,
+      "cover_preference": 0.2,
+      "target_preference": 0.5,
+      "attention_breadth": 0.55,
+      "scan_frequency": 0.6
+    },
+    "opponent_beliefs": {}
+  }
+}

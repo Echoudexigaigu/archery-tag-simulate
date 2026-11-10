@@ -1,6 +1,6 @@
 """Small continuous-collision and ballistic helpers. All lengths are metres."""
 
-from math import atan, cos, hypot, sin, sqrt
+from math import atan, cos, exp, expm1, hypot, sin, sqrt
 
 
 def segment_box(p, q, lo, hi):
@@ -48,11 +48,49 @@ def segment_cylinder(p, q, center0, center1, radius, height):
     return t0 if t0 <= t1 else None
 
 
-def ballistic_velocity(origin, target, speed, gravity):
+def advance_arrow(position, velocity, dt, gravity, drag=0.0):
+    """Exact free-flight step for constant gravity and linear velocity drag."""
+    if drag <= 0:
+        q = (position[0] + velocity[0] * dt, position[1] + velocity[1] * dt,
+             position[2] + velocity[2] * dt - 0.5 * gravity * dt * dt)
+        return q, (velocity[0], velocity[1], velocity[2] - gravity * dt)
+    decay = exp(-drag * dt)
+    factor = -expm1(-drag * dt) / drag
+    q = (position[0] + velocity[0] * factor,
+         position[1] + velocity[1] * factor,
+         position[2] + velocity[2] * factor - gravity * (dt - factor) / drag)
+    return q, (velocity[0] * decay, velocity[1] * decay,
+               velocity[2] * decay - gravity * factor)
+
+
+def ballistic_velocity(origin, target, speed, gravity, drag=0.0, max_flight=3.0):
     """Low-angle fixed-speed trajectory, or None if the point is unreachable."""
     dx, dy, dz = (b - a for a, b in zip(origin, target))
     distance = hypot(dx, dy)
     if distance < 1e-8:
+        return None
+    if drag > 0:
+        # Solve for the earliest fixed-speed intercept of a stationary aim point.
+        # This compensates average drop, while the shooter still has dispersion
+        # and deliberately imperfect moving-target lead in the policy.
+        def required(t):
+            factor = -expm1(-drag * t) / drag
+            return (dx / factor, dy / factor,
+                    (dz + gravity * (t - factor) / drag) / factor)
+        previous = 1e-6
+        for step in range(1, 181):
+            t = max_flight * step / 180
+            v = required(t)
+            if sum(x * x for x in v) <= speed * speed:
+                lo, hi = previous, t
+                for _ in range(32):
+                    mid = (lo + hi) / 2
+                    if sum(x * x for x in required(mid)) > speed * speed:
+                        lo = mid
+                    else:
+                        hi = mid
+                return required(hi)
+            previous = t
         return None
     v2 = speed * speed
     disc = v2 * v2 - gravity * (gravity * distance * distance + 2 * dz * v2)
